@@ -27,7 +27,7 @@ def show_progress(block_num, block_size, total_size):
     print(bar_template.format(bar, p), end='')
 
 
-def get_file(url, file_name=None, cache_dir='./data'):
+def get_file(url, file_name=None, cache_dir='./data/'):
     """Download a file from the `url` if it is not in the cache.
     The file at the `url` is downloaded to the `./data`.
     Args:
@@ -37,7 +37,8 @@ def get_file(url, file_name=None, cache_dir='./data'):
     Returns:
         str: Absolute path to the saved file.
     """
-    url = '/'.join(url.split('/')[:2]) + '/' + quote('/'.join(url.split('/')[2:])) # (% incoding)
+    url_splited = url.split('/')
+    url = '/'.join(url_splited[:2]) + '/' + quote('/'.join(url_splited[2:])) # (% incoding)
 
     if file_name is None:
         file_name = url[url.rfind('/') + 1:]

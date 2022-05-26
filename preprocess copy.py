@@ -19,10 +19,10 @@ def crop_by_separating_letter(x, min_brightness=3, wh_rate_range=(0.4, 1.1), min
     Parameters
     ----------
         ``min_brightness`` (float): 
-            한 글자로 판단할 최소 세로 한 줄 밝기
+            한 글자로 인정할 최소 세로 한 줄 밝기
             세로 한줄의 (0~1)픽셀을 sum() 한 결과
-        ``wh_rate_range`` (float): 
-            한 글자로 판단할 세로/가로 비율 범위
+        ``max_wh_rate`` (float): 
+            한 글자로 인정할 최대 세로/가로 비율
     '''
     row_len = x.shape[2] # (C, H, (W))
     col_len = x.shape[1] # (C, (H), W)
@@ -30,22 +30,24 @@ def crop_by_separating_letter(x, min_brightness=3, wh_rate_range=(0.4, 1.1), min
     wh_rate_max = wh_rate_range[1]
 
     sep_idxs = []
+    sep_idxs_temp = []
     l = None
     before_r = None
     before_wh_rate = None
 
     for r in range(1, row_len, 1):
-        x_line = x[:, :, r:r+1]
+        x_piece = x[:, :, r:r+1]
 
-        if l is None and torch.sum(x_line) >= min_brightness:
+        if l is None and torch.sum(x_piece) >= min_brightness:
             l = r
-        elif l is not None and (torch.sum(x_line) < min_brightness or r==row_len-1):
+        elif l is not None and (torch.sum(x_piece) < min_brightness or r==row_len-1):
             wh_rate = (r-l) / col_len
 
             if recombination and sep_idxs != [] and \
                 wh_rate < wh_rate_min and before_wh_rate < wh_rate_min and \
                 (r-sep_idxs[-1][2]) / col_len < wh_rate_max and l-before_r < min_space:
 
+                sep_idxs_temp.extend([sep_idxs[-1], [0, col_len, l, r]])
                 l = sep_idxs[-1][2]
                 del sep_idxs[-1]
 
@@ -54,52 +56,6 @@ def crop_by_separating_letter(x, min_brightness=3, wh_rate_range=(0.4, 1.1), min
             l = None
             before_r = r
             before_wh_rate = wh_rate
-
-    return sep_idxs
-
-
-def crop_by_separating_letter_backward(x, min_brightness=3, wh_rate_range=(0.4, 1.1), min_space=30, recombination=True):
-    '''
-    Parameters
-    ----------
-        ``min_brightness`` (float): 
-            한 글자로 판단할 최소 세로 한 줄 밝기
-            세로 한줄의 (0~1)픽셀을 sum() 한 결과
-        ``wh_rate_range`` (float): 
-            한 글자로 판단할 세로/가로 비율 범위
-    '''
-    row_len = x.shape[2] # (C, H, (W))
-    col_len = x.shape[1] # (C, (H), W)
-    wh_rate_min = wh_rate_range[0]
-    wh_rate_max = wh_rate_range[1]
-
-    sep_idxs = []
-    r = None
-    before_l = None
-    before_wh_rate = None
-
-    for l in range(row_len-1, -1, -1):
-        x_line = x[:, :, l:l+1]
-
-        if r is None and torch.sum(x_line) >= min_brightness:
-            r = l
-        elif r is not None and (torch.sum(x_line) < min_brightness or l==0):
-            wh_rate = (r-l) / col_len
-
-            if recombination and sep_idxs != [] and \
-                wh_rate < wh_rate_min and before_wh_rate < wh_rate_min and \
-                (sep_idxs[-1][3]-l) / col_len < wh_rate_max and before_l-r < min_space:
-
-                r = sep_idxs[-1][3]
-                del sep_idxs[-1]
-
-            sep_idxs.append([0, col_len, l, r])
-
-            r = None
-            before_l = l
-            before_wh_rate = wh_rate
-
-    sep_idxs.reverse()
 
     return sep_idxs
 
@@ -121,8 +77,7 @@ def plot_cutting_info(x, letter_idxs, block=True):
         axes = fig.add_subplot(n_col+1, n_row, n_row+idx+1, xticks=[], yticks=[])
         axes.text(0, -15, f'{wh_rate:.2f}', size=12, ha="center", va="top", color='red' if wh_rate < 0.33 else 'black')
         axes.imshow(x_piece[0], cmap=cmap)
-    
-    fig.set_size_inches(12.8, 7.6)
+
     plt.show(block=block)
 
 
@@ -166,12 +121,12 @@ train_set = HWKoDataset()
 
 for x, t in track(train_set, total=len(train_set)):
     sep_idxs = crop_by_separating_letter(x)
-    # sep_idxs_no_merge = crop_by_separating_letter(x, recombination=False)
+    sep_idxs2 = crop_by_separating_letter(x, recombination=False)
     # croped_idxs2 = crop_blank(sep_idxs)
 
     # print(sep_idxs, croped_idxs2, t)
-    plot_cutting_info(x, sep_idxs, block=True)
-    # plot_cutting_info(x, sep_idxs_no_merge, block=True)
-    # input()
+    plot_cutting_info(x, sep_idxs, block=False)
+    plot_cutting_info(x, sep_idxs2)
+    input()
 
 # print(croped_idxs2)

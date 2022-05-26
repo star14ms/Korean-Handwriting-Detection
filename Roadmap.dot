@@ -1,0 +1,68 @@
+
+// install graphviz
+// dot Roadmap.dot -T png -o Roadmap.png
+
+digraph G {
+	fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"
+	node [fontname="BM JUA_TTF,Helvetica,Arial,sans-serif", style=filled]
+	edge [fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"]
+
+    subgraph pre_processing {
+		style=filled;
+		color=lightgreen;
+		node [style=filled,color=white];
+        ap [label="자/모음으로 분해", color=orange]
+        bp [label="초/중/종성으로 분해", color=orange]
+        cp [label="문자 단위로 분해", color=orange]
+		label = "손글씨 전처리";
+	}
+
+    subgraph cluster_a {
+		style=filled;
+		color=lightgrey;
+		node [style=filled,color=white];
+        a0 [label="자/모음 손글씨\ninput", color=orange, shape=invhouse]
+        a1 [label="Model\n(24 or 40종류)", color=orange, shape="doubleoctagon"]
+        a2 [label="output\n자/모음", color=orange, shape=invhouse]
+		label = "음소(자/모음) 단위 감지";
+	}
+
+	subgraph cluster_b {
+		style=filled;
+		color=lightgrey;
+		node [style=filled,color=white];
+        b0 [label="초/중/종성 손글씨\ninput", color=orange, shape=invhouse]
+        b1 [label="Model\n(51종류)", color=orange, shape="doubleoctagon"]
+        b2 [label="output\n초/중/종성", color=orange, shape=invhouse]
+		label = "음소(초/중/종성) 단위 감지";
+	}
+
+
+	subgraph cluster_c {
+		style=filled;
+		color=lightgrey;
+		node [style=filled,color=white];
+        c0 [label="문자 손글씨\ninput", color=orange, shape=invhouse]
+        c1 [label="Model\n(11172종류)", color=orange, shape="doubleoctagon"]
+        c2 [label="output\n문자", color=orange, shape=invhouse]
+		label = "음절(글자) 단위 감지";
+	}
+
+    subgraph post_processing {
+		style=filled;
+		color=lightgreen;
+		node [style=filled,color=white];
+        a3 [label="자/모음 재조합", color=orange]
+        b3 [label="초/중/종성 재조합", color=orange]
+        c3 [label="문자 재조합", color=orange]
+		label = "문자 후처리";
+	}
+
+    
+	start -> ap -> a0 -> a1 -> a2 -> a3 -> end;
+	start -> bp -> b0 -> b1 -> b2 -> b3 -> end;
+	start -> cp -> c0 -> c1 -> c2 -> c3 -> end;
+
+	start [label="손글씨 문장", shape=Mdiamond, style="solid", color="lightblue"];
+	end [label="문자열", shape=Msquare, style="solid", color="purple"];
+}

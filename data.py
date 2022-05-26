@@ -1,10 +1,12 @@
-import numpy as np
 import os
 import json
+from torch.utils.data import Dataset
+from torchvision.transforms import ToTensor, ToPILImage
+
 from PIL import Image
+from PIL.ImageOps import invert
 
 from utils import get_file, unzip
-from torch.utils.data import Dataset
 
 
 def read_json(label_path: str):
@@ -14,13 +16,14 @@ def read_json(label_path: str):
     return json_data
 
 
-
 class HWKoDataset(Dataset):
     def __init__(self, data_dir='./data/', transform=None, target_transform=None, train=True):
         self.data_dir = data_dir
         self.img_dir = f'{data_dir}train/images/' if train else f'{data_dir}test/images/'
         self.transform = transform
         self.target_transform = target_transform
+        self.to_tensor = ToTensor()
+        self.to_pil = ToPILImage()
 
         if not os.path.exists(self.img_dir):
             self.prepare()
@@ -33,8 +36,8 @@ class HWKoDataset(Dataset):
         return self.len
 
     def __getitem__(self, idx):
-        image = Image.open(self.img_dir + self.data[idx])
-        image = np.asarray(image)
+        image = Image.open(self.img_dir + self.data[idx]).convert('L')
+        image = self.to_tensor(invert(image))
         label = self.label[idx]
         if self.transform:
             image = self.transform(image)
@@ -55,9 +58,11 @@ class HWKoDataset(Dataset):
 
 
 if __name__ == '__main__':
+    from rich import print
+
     train_set = HWKoDataset()
 
     for x, t in train_set:
-        Image.fromarray(x).show()
+        train_set.to_pil(x).show()
         print(t)
         input()

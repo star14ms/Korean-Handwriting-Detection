@@ -1,0 +1,66 @@
+
+// install graphviz
+// dot roadmap/way2.dot -T png -o roadmap/way2.png
+
+digraph G {
+	fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"
+	node [fontname="BM JUA_TTF,Helvetica,Arial,sans-serif", style=filled]
+	edge [fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"]
+
+	start [label="손글씨 문장", shape=Mdiamond, style="solid", color="lightblue"];
+	end [label="문자열", shape=Msquare, style="solid", color="purple"];
+
+    subgraph cluster_pre_processing {
+		style=filled;
+		color=lightgreen;
+		node [style=filled,color=white];
+        decomposition [label="문자 단위로 분해", color=orange]
+		label="전처리";
+	}
+
+    subgraph cluster_model {
+		style=filled;
+		color=cadetblue1;
+		label="model";
+		rankdir="TB";
+
+		subgraph cluster_input {
+	    	style=filled;
+			color=lightskyblue;
+	    	node [style=filled,color=white];
+            input [label="문자 손글씨", color=orange, shape=invhouse]
+	    	label="input";
+	    }
+    
+	    subgraph cluster_network {
+	    	style=filled;
+			color=lightskyblue;
+	    	node [style=filled,color=white];
+            network [label="network", color=orange, shape="doubleoctagon"]
+	    	label="음절(1글자) -> 초/중/종성";
+	    }
+    
+	    subgraph cluster_output {
+	    	style=filled;
+			color=lightskyblue;
+	    	node [style=filled,color=white];
+            output_3 [label="종성 (28종류)", color=orange, shape=invhouse]
+            output_2 [label="중성 (21종류)", color=orange, shape=invhouse]
+            output_1 [label="초성 (19종류)", color=orange, shape=invhouse]
+	    	label="output";
+	    }
+	}
+
+    subgraph cluster_post_processing {
+		style=filled;
+		color=lightgreen;
+		node [style=filled,color=white];
+        recombination [label="문자 재조합", color=orange]
+		label="후처리";
+	}
+
+	start -> decomposition 
+	-> input -> network -> output_1, output_2, output_3 
+	-> recombination -> end;
+}
+

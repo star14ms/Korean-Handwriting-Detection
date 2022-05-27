@@ -1,13 +1,13 @@
 
 // install graphviz
-// dot Roadmap.dot -T png -o Roadmap.png
+// dot roadmap/way1.dot -T png -o roadmap/way1.png
 
 digraph G {
 	fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"
 	node [fontname="BM JUA_TTF,Helvetica,Arial,sans-serif", style=filled]
 	edge [fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"]
 
-    subgraph pre_processing {
+    subgraph cluster_pre_processing {
 		style=filled;
 		color=lightgreen;
 		node [style=filled,color=white];
@@ -37,7 +37,6 @@ digraph G {
 		label = "음소(초/중/종성) 단위 감지";
 	}
 
-
 	subgraph cluster_c {
 		style=filled;
 		color=lightgrey;
@@ -48,7 +47,7 @@ digraph G {
 		label = "음절(글자) 단위 감지";
 	}
 
-    subgraph post_processing {
+    subgraph cluster_post_processing {
 		style=filled;
 		color=lightgreen;
 		node [style=filled,color=white];

@@ -1,20 +1,37 @@
-import matplotlib.pyplot as plt 
+from data import HWKoDataset
+from plot import set_font
+
 import torch
+import matplotlib.pyplot as plt 
+import random
+import os
 
 from rich import print
 from rich.console import Console
-from rich.traceback import install
 from rich.progress import track
-
-from data import HWKoDataset
-from plot import set_font
-from data_extract import get_len_space_list
+from rich.traceback import install
 install()
+
+
 set_font(family='BM JUA_TTF')
+os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+
 console = Console()
 
 
 def separate_by_space(x, min_brightness=3, min_space=50, min_letter_len=5):
+    '''
+    Parameters
+    ----------
+        ``min_brightness`` ``(float)`` : 
+            글자의 감지 여부를 판단할 최소 세로 한 줄 밝기 합
+            세로 한 줄 밝기: 세로 한줄의 0~1 범위 픽셀을 ``sum()`` 한 결과
+        ``min_space`` ``(int)`` : 
+            띄어쓰기로 판단할 최소 빈칸 길이
+        ``min_letter_len`` ``(int)`` :
+            글자의 감지 여부를 판단할 최소 글자 너비
+    '''
+    
     row_len = x.shape[2] # (C, H, (W))
     col_len = x.shape[1] # (C, (H), W)
 
@@ -45,7 +62,10 @@ def separate_by_space(x, min_brightness=3, min_space=50, min_letter_len=5):
                 appended = True
             detected = False
 
-    return sep_idxs
+    if detected and not appended and xr-xl > min_letter_len: # 마지막 감지가 종료되지 않았다면
+        sep_idxs.append((0, col_len, xl, row_len))
+
+    return (*sep_idxs,)
 
 
 def plot_cutting_info(x, letter_idxs, block=True):
@@ -57,15 +77,16 @@ def plot_cutting_info(x, letter_idxs, block=True):
 
     axes = fig.add_subplot(n_col, 1, 1, xticks=[], yticks=[])
     axes.imshow(x[0], cmap=cmap)
-    axes.text(0, -50, f'판단한 글자 수: {len(letter_idxs)}', size=50)
+    axes.text(0, -50, f'분해한 조각 수: {len(letter_idxs)}', size=50)
     
     for idx, (yt, yb, xl, xr) in enumerate(letter_idxs):
         x_piece = x[:, yt:yb, xl:xr]
         wh_rate = (xr-xl) / (yb-yt)
         axes = fig.add_subplot(n_col+1, n_row, n_row+idx+1, xticks=[], yticks=[])
-        axes.text(0, -15, f'{wh_rate:.2f}', size=12, ha="center", va="top", color='red' if wh_rate < 0.33 else 'black')
+        axes.text(0, -20, f'w/h:{wh_rate:.2f} w:{xr-xl}px', size=20, ha="left", color='red' if wh_rate < 0.33 else 'black')
         axes.imshow(x_piece[0], cmap=cmap)
 
+    fig.set_size_inches(12.8, 7.6)
     plt.show(block=block)
 
 
@@ -105,18 +126,18 @@ def crop_blank(x, sep_idxs):
 
 
 train_set = HWKoDataset()
-len_space_list_all = []
+
 
 for x, t in track(train_set, total=len(train_set)):
-    sep_idxs, len_space_list = separate_by_space(x)
-    len_space_list_all.extend(len_space_list)
+    x, t = random.choice(train_set)
+    sep_idxs = separate_by_space(x)
 
     # sep_idxs_no_merge = crop_by_separating_letter(x, recombination=False)
     # croped_idxs2 = crop_blank(sep_idxs)
 
-    # print(sep_idxs, croped_idxs2, t)
+    print(t)
     plot_cutting_info(x, sep_idxs, block=True)
     # plot_cutting_info(x, sep_idxs_no_merge, block=True)
-    input()
+    # input()
 
 # print(croped_idxs2)

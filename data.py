@@ -36,9 +36,10 @@ class HWKoDataset(Dataset):
         return self.len
 
     def __getitem__(self, idx):
+        file_name = self.data[idx]
         image = Image.open(self.img_dir + self.data[idx]).convert('L')
         image = self.to_tensor(invert(image))
-        label = self.label[idx]
+        label = [label for label in self.label if label["file_name"] == file_name][0]
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

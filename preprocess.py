@@ -8,98 +8,42 @@ from rich.progress import track
 
 from data import HWKoDataset
 from plot import set_font
-from utils import bcolors as bc
+from data_extract import get_len_space_list
 install()
 set_font(family='BM JUA_TTF')
 console = Console()
 
 
-def crop_by_separating_letter(x, min_brightness=3, wh_rate_range=(0.4, 1.1), min_space=30, recombination=True):
-    '''
-    Parameters
-    ----------
-        ``min_brightness`` (float): 
-            한 글자로 판단할 최소 세로 한 줄 밝기
-            세로 한줄의 (0~1)픽셀을 sum() 한 결과
-        ``wh_rate_range`` (float): 
-            한 글자로 판단할 세로/가로 비율 범위
-    '''
+def separate_by_space(x, min_brightness=3, min_space=50, min_letter_len=5):
     row_len = x.shape[2] # (C, H, (W))
     col_len = x.shape[1] # (C, (H), W)
-    wh_rate_min = wh_rate_range[0]
-    wh_rate_max = wh_rate_range[1]
 
     sep_idxs = []
-    l = None
-    before_r = None
-    before_wh_rate = None
+    detected = False
+    appended = False
+    space = 0
+    xl = 0
+    xr = 0
 
-    for r in range(1, row_len, 1):
-        x_line = x[:, :, r:r+1]
+    for now_x in range(1, row_len, 1):
+        v_line = x[:, :, now_x:now_x+1]
 
-        if l is None and torch.sum(x_line) >= min_brightness:
-            l = r
-        elif l is not None and (torch.sum(x_line) < min_brightness or r==row_len-1):
-            wh_rate = (r-l) / col_len
+        if torch.sum(v_line) > min_brightness: # 글씨가 감지되면
+            if not detected and appended: # 새로운 감지가 시작되는 순간
+                appended = False
+                xl = now_x
+            space = 0
+            detected = True
 
-            if recombination and sep_idxs != [] and \
-                wh_rate < wh_rate_min and before_wh_rate < wh_rate_min and \
-                (r-sep_idxs[-1][2]) / col_len < wh_rate_max and l-before_r < min_space:
-
-                l = sep_idxs[-1][2]
-                del sep_idxs[-1]
-
-            sep_idxs.append([0, col_len, l, r])
-
-            l = None
-            before_r = r
-            before_wh_rate = wh_rate
-
-    return sep_idxs
-
-
-def crop_by_separating_letter_backward(x, min_brightness=3, wh_rate_range=(0.4, 1.1), min_space=30, recombination=True):
-    '''
-    Parameters
-    ----------
-        ``min_brightness`` (float): 
-            한 글자로 판단할 최소 세로 한 줄 밝기
-            세로 한줄의 (0~1)픽셀을 sum() 한 결과
-        ``wh_rate_range`` (float): 
-            한 글자로 판단할 세로/가로 비율 범위
-    '''
-    row_len = x.shape[2] # (C, H, (W))
-    col_len = x.shape[1] # (C, (H), W)
-    wh_rate_min = wh_rate_range[0]
-    wh_rate_max = wh_rate_range[1]
-
-    sep_idxs = []
-    r = None
-    before_l = None
-    before_wh_rate = None
-
-    for l in range(row_len-1, -1, -1):
-        x_line = x[:, :, l:l+1]
-
-        if r is None and torch.sum(x_line) >= min_brightness:
-            r = l
-        elif r is not None and (torch.sum(x_line) < min_brightness or l==0):
-            wh_rate = (r-l) / col_len
-
-            if recombination and sep_idxs != [] and \
-                wh_rate < wh_rate_min and before_wh_rate < wh_rate_min and \
-                (sep_idxs[-1][3]-l) / col_len < wh_rate_max and before_l-r < min_space:
-
-                r = sep_idxs[-1][3]
-                del sep_idxs[-1]
-
-            sep_idxs.append([0, col_len, l, r])
-
-            r = None
-            before_l = l
-            before_wh_rate = wh_rate
-
-    sep_idxs.reverse()
+        else: # 글씨가 감지되지 않으면
+            space += 1
+            if detected: # 감지가 종료되는 순간
+                xr = now_x
+            if space == min_space: # 공백 수가 띄어쓰기 너비를 달성하면
+                if xr-xl > min_letter_len: 
+                    sep_idxs.append((0, col_len, xl, xr))
+                appended = True
+            detected = False
 
     return sep_idxs
 
@@ -121,8 +65,7 @@ def plot_cutting_info(x, letter_idxs, block=True):
         axes = fig.add_subplot(n_col+1, n_row, n_row+idx+1, xticks=[], yticks=[])
         axes.text(0, -15, f'{wh_rate:.2f}', size=12, ha="center", va="top", color='red' if wh_rate < 0.33 else 'black')
         axes.imshow(x_piece[0], cmap=cmap)
-    
-    fig.set_size_inches(12.8, 7.6)
+
     plt.show(block=block)
 
 
@@ -162,16 +105,18 @@ def crop_blank(x, sep_idxs):
 
 
 train_set = HWKoDataset()
-
+len_space_list_all = []
 
 for x, t in track(train_set, total=len(train_set)):
-    sep_idxs = crop_by_separating_letter(x)
+    sep_idxs, len_space_list = separate_by_space(x)
+    len_space_list_all.extend(len_space_list)
+
     # sep_idxs_no_merge = crop_by_separating_letter(x, recombination=False)
     # croped_idxs2 = crop_blank(sep_idxs)
 
     # print(sep_idxs, croped_idxs2, t)
     plot_cutting_info(x, sep_idxs, block=True)
     # plot_cutting_info(x, sep_idxs_no_merge, block=True)
-    # input()
+    input()
 
 # print(croped_idxs2)

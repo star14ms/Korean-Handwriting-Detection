@@ -38,9 +38,9 @@ def syllable_to_phoneme(label_csv_file=DEFAULT_LABEL_CSV_FILE, output_dir=DEFAUL
                 'file_path': img_path,
                 'label': label,
                 'phoneme': {
-                    'initial': phoneme[0],
-                    'medial': phoneme[1],
-                    'final': phoneme[2],
+                    'initial': phoneme[0] if phoneme[0] is not None else '',
+                    'medial': phoneme[1] if phoneme[1] is not None else '',
+                    'final': phoneme[2] if phoneme[2] is not None else '',
                 },
             }
             label_phonemes.append(new_label)

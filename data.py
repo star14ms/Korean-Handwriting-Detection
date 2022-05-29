@@ -81,7 +81,7 @@ class KoSyllableDataset(Dataset):
     def __getitem__(self, idx):
         file_path = self.data[idx]
         image = Image.open(self.img_dir + self.data[idx]).convert('L')
-        label = [label['label'] for label in self.label if label["file_path"] == file_path][0]
+        label = [label['phoneme'] for label in self.label if label["file_path"] == file_path][0]
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

@@ -17,18 +17,15 @@ import random
 import os
 
 from rich import print
-from rich.console import Console
 from rich.progress import track
 from rich.traceback import install
-from utils.rich import new_progress
+from utils.rich import new_progress, console
 install()
 
 
 set_font(family='BM JUA_TTF')
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
-console = Console()
- 
 
 train_set = KoHWSentenceDataset()
 n_corrct_n_seperated = 0

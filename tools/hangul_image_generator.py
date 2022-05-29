@@ -70,14 +70,14 @@ def generate_hangul_images(label_file=DEFAULT_LABEL_FILE, fonts_dir=DEFAULT_FONT
                 fill=(255),
                 font=font
             )
-            file_string = 'hangul_{}.jpeg'.format(total_count)
+            file_string = '{:08d}.jpeg'.format(total_count)
             file_path = os.path.join(image_dir, file_string)
             image.save(file_path, 'JPEG')
             labels_csv.write(u'{},{}\n'.format(file_string, character))
 
             for i in range(DISTORTION_COUNT):
                 total_count += 1
-                file_string = 'hangul_{}.jpeg'.format(total_count)
+                file_string = '{:08d}.jpeg'.format(total_count)
                 file_path = os.path.join(image_dir, file_string)
                 arr = numpy.array(image)
 

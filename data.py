@@ -38,9 +38,9 @@ class KoHWSentenceDataset(Dataset):
 
     def __getitem__(self, idx):
         file_name = self.data[idx]
-        image = Image.open(self.img_dir + self.data[idx]).convert('L')
+        image = Image.open(self.img_dir + file_name).convert('L')
         image = invert(image)
-        label = [label for label in self.label if label["file_name"] == file_name][0]
+        label = [label['text'] for label in self.label if label["file_name"] == file_name][0] if self.label is not None else ''
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
@@ -65,9 +65,9 @@ class KoSyllableDataset(Dataset):
     to_tensor = ToTensor()
     to_pil = ToPILImage()
 
-    def __init__(self, data_dir='./data-syllable/', transform=Compose([ToTensor()]), target_transform=None):
+    def __init__(self, data_dir='./data-syllable/', transform=Compose([ToTensor()]), target_transform=None, train=True):
         self.data_dir = data_dir
-        self.img_dir = f'{data_dir}hangul-images/'
+        self.img_dir = f'{data_dir}train/' if train else f'{data_dir}test/'
         self.transform = transform
         self.target_transform = target_transform
 
@@ -82,9 +82,9 @@ class KoSyllableDataset(Dataset):
         return self.len
 
     def __getitem__(self, idx):
-        file_path = self.data[idx]
-        image = Image.open(self.img_dir + self.data[idx]).convert('L')
-        label = [label['label'] for label in self.label if label["file_path"] == file_path][0]
+        file_name = self.data[idx]
+        image = Image.open(self.img_dir + file_name).convert('L')
+        label = [label['label'] for label in self.label if label["file_name"] == file_name][0]
         if self.transform:
             image = self.transform(image)
         if self.target_transform:
@@ -98,6 +98,7 @@ class KoSyllableDataset(Dataset):
 
         hangul_tools.generate_hangul_images()
         hangul_tools.syllable_to_phoneme()
+        hangul_tools.seperate_data_train_and_test()
 
         print('\n음절 데이터셋 생성 완료!')
 
@@ -105,10 +106,12 @@ class KoSyllableDataset(Dataset):
 if __name__ == '__main__':
     from rich import print
 
-    train_set = KoHWSentenceDataset()
-    data_set = KoSyllableDataset()
+    sentence_set = KoHWSentenceDataset()
+    sentence_set2 = KoHWSentenceDataset(train=False)
+    train_set = KoSyllableDataset()
+    test_set = KoSyllableDataset(train=False)
 
-    for x, t in data_set:
-        data_set.to_pil(x).show()
+    for x, t in test_set:
+        test_set.to_pil(x).show()
         print(t)
         input()

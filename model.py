@@ -85,3 +85,74 @@ class KoCtoP(nn.Module):
         y3 = self.liner_final(x)
 
         return y1, y2, y3
+
+
+class KoCtoPLarge(nn.Module):
+    def __init__(self) -> None:
+        super().__init__()
+        c1, c2, c3, c4 = 64, 128, 256, 512
+        c3_feature_size = 64 // (2**3)
+        c4_feature_size = 64 // (2**4)
+        in_features = (c3*(c3_feature_size**2)) * (c4*(c4_feature_size**2))
+        hiddens = 256
+
+        self.conv1_pool = nn.Sequential(
+            Conv2d_Norm_ReLU(1, c1), 
+            Conv2d_Norm_ReLU(c1, c1), 
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.conv2_pool = nn.Sequential(
+            Conv2d_Norm_ReLU(c1, c2), 
+            Conv2d_Norm_ReLU(c2, c2), 
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.conv3_pool = nn.Sequential(
+            Conv2d_Norm_ReLU(c2, c3), 
+            Conv2d_Norm_ReLU(c3, c3), 
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.conv4_pool = nn.Sequential(
+            Conv2d_Norm_ReLU(c3, c4), 
+            Conv2d_Norm_ReLU(c4, c4), 
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        
+        self.flatten = nn.Sequential(
+            nn.Flatten(),
+            nn.Dropout(),
+        )
+        
+        self.liner_initial = nn.Sequential(
+            Liner_Norm_ReLU(in_features, hiddens),
+            nn.Dropout(),
+            nn.Linear(hiddens, len_initial),
+            nn.Dropout(),
+        )
+        self.liner_medial = nn.Sequential(
+            Liner_Norm_ReLU(in_features, hiddens),
+            nn.Dropout(),
+            nn.Linear(hiddens, len_medial),
+            nn.Dropout(),
+        )
+        self.liner_final = nn.Sequential(
+            Liner_Norm_ReLU(in_features, hiddens),
+            nn.Dropout(),
+            nn.Linear(hiddens, len_final),
+            nn.Dropout(),
+        )
+
+    def forward(self, x):
+        x = self.conv1_pool(x) # [N, 64, 32, 32]
+        x = self.conv2_pool(x) # [N, 128, 16, 16]
+        x3 = self.conv3_pool(x) # [N, 256, 8, 8]
+        x4 = self.conv4_pool(x3) # [N, 512, 4, 4]
+        x3 = self.flatten(x3) # [N, 16384]
+        x4 = self.flatten(x4) # [N, 8192]
+        x = torch.cat([x3, x4], dim=1) # [N, 24576]
+        del x3, x4
+
+        y1 = self.liner_initial(x)
+        y2 = self.liner_medial(x)
+        y3 = self.liner_final(x)
+
+        return y1, y2, y3

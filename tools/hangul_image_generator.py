@@ -11,14 +11,13 @@ from PIL import Image, ImageFont, ImageDraw
 from scipy.ndimage.interpolation import map_coordinates
 from scipy.ndimage.filters import gaussian_filter
 
+if '__file__' in globals():
+    import os, sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
+from tools.constant import DEFAULT_FONTS_DIR, DEFAULT_LABEL_FILE, DEFAULT_OUTPUT_DIR, LEN_LABEL
+from utils.rich import new_progress
 
-# Default data paths.
-DEFAULT_LABEL_FILE = os.path.join(SCRIPT_PATH,
-                                  '../labels/2350-common-hangul.txt')
-DEFAULT_FONTS_DIR = os.path.join(SCRIPT_PATH, '../fonts')
-DEFAULT_OUTPUT_DIR = './data-syllable' # os.path.join(SCRIPT_PATH, '../data-syllable')
 
 # Number of random distortion images to generate per font and character.
 DISTORTION_COUNT = 3
@@ -40,7 +39,7 @@ def generate_hangul_images(label_file=DEFAULT_LABEL_FILE, fonts_dir=DEFAULT_FONT
     with io.open(label_file, 'r', encoding='utf-8') as f:
         labels = f.read().splitlines()
 
-    image_dir = os.path.join(output_dir, 'hangul-images')
+    image_dir = os.path.join(output_dir, 'train')
     if not os.path.exists(image_dir):
         os.makedirs(os.path.join(image_dir))
 
@@ -50,13 +49,18 @@ def generate_hangul_images(label_file=DEFAULT_LABEL_FILE, fonts_dir=DEFAULT_FONT
     labels_csv = io.open(os.path.join(output_dir, 'labels-map.csv'), 'w',
                          encoding='utf-8')
 
+    progress = new_progress()
+    progress.start()
+    total = LEN_LABEL * len(fonts) * (DISTORTION_COUNT + 1)
+    task_id = progress.add_task('[red]generate images', total=total)
+
     total_count = 0
     prev_count = 0
     for character in labels:
         # Print image count roughly every 5000 images.
-        if total_count - prev_count > 5000:
+        if total_count - prev_count >= 5000:
             prev_count = total_count
-            print('{} images generated...'.format(total_count))
+            progress.log('{} images generated...'.format(total_count))
 
         for font in fonts:
             total_count += 1
@@ -74,6 +78,7 @@ def generate_hangul_images(label_file=DEFAULT_LABEL_FILE, fonts_dir=DEFAULT_FONT
             file_path = os.path.join(image_dir, file_string)
             image.save(file_path, 'JPEG')
             labels_csv.write(u'{},{}\n'.format(file_string, character))
+            progress.advance(task_id)
 
             for i in range(DISTORTION_COUNT):
                 total_count += 1
@@ -88,9 +93,11 @@ def generate_hangul_images(label_file=DEFAULT_LABEL_FILE, fonts_dir=DEFAULT_FONT
                 distorted_image = Image.fromarray(distorted_array)
                 distorted_image.save(file_path, 'JPEG')
                 labels_csv.write(u'{},{}\n'.format(file_string, character))
+                progress.advance(task_id)
 
-    print('Finished generating {} images.'.format(total_count))
+    progress.log('Finished generating {} images.'.format(total_count))
     labels_csv.close()
+    progress.stop()
 
 
 def elastic_distort(image, alpha, sigma):

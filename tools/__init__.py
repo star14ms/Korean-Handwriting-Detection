@@ -1,4 +1,5 @@
 from tools.hangul_image_generator import generate_hangul_images
 from tools.syllable_to_phoneme import syllable_to_phoneme
-from tools.syllable_to_phoneme import to_chr, to_label
-from tools.syllable_to_phoneme import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
+from tools.data_seperator import seperate_data_train_and_test
+from tools.constant import to_chr, to_label
+from tools.constant import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS

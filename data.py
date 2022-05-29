@@ -60,13 +60,16 @@ class KoHWSentenceDataset(Dataset):
 
 
 class KoSyllableDataset(Dataset):
-    def __init__(self, data_dir='./data-syllable/', transform=Compose([ToTensor()]), target_transform=None, train=True):
+    to_chr = hangul_tools.to_chr
+    to_label = hangul_tools.to_label
+    to_tensor = ToTensor()
+    to_pil = ToPILImage()
+
+    def __init__(self, data_dir='./data-syllable/', transform=Compose([ToTensor()]), target_transform=None):
         self.data_dir = data_dir
         self.img_dir = f'{data_dir}hangul-images/'
         self.transform = transform
         self.target_transform = target_transform
-        self.to_tensor = ToTensor()
-        self.to_pil = ToPILImage()
 
         if not os.path.exists(self.img_dir):
             self.prepare()
@@ -81,7 +84,7 @@ class KoSyllableDataset(Dataset):
     def __getitem__(self, idx):
         file_path = self.data[idx]
         image = Image.open(self.img_dir + self.data[idx]).convert('L')
-        label = [label['phoneme'] for label in self.label if label["file_path"] == file_path][0]
+        label = [label['label'] for label in self.label if label["file_path"] == file_path][0]
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

@@ -28,7 +28,7 @@ class HWKoDataset(Dataset):
         if not os.path.exists(self.img_dir):
             self.prepare()
 
-        self.data = os.listdir(self.img_dir)
+        self.data = tuple(os.listdir(self.img_dir))
         self.label = read_json(f'{data_dir}train/labels.json')['annotations'] if train else None
         self.len = len(self.data)
 

@@ -123,5 +123,5 @@ if __name__ == '__main__':
     
     sns.histplot(lens_space_of_dataset, binrange=binrange, bins=100, kde=False)
     plt.title('문장 공백 길이 분포도\nDistribution of spacing lengths')
-    plt.savefig('data_insight/Distribution_of_spacing_lengths_{}_to_{}.png'.format(*binrange))
+    plt.savefig('insight/Distribution_of_spacing_lengths_{}_to_{}.png'.format(*binrange))
     plt.show()

@@ -1,6 +1,6 @@
 
 // install graphviz
-// dot roadmap/way1.dot -T png -o roadmap/way1.png
+// dot insight/roadmap/way1.dot -T png -o insight/roadmap/way1.png
 
 digraph G {
 	fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"

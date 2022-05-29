@@ -1,6 +1,6 @@
 
 // install graphviz
-// dot roadmap/way2.dot -T png -o roadmap/way2.png
+// dot insight/roadmap/way2.dot -T png -o insight/roadmap/way2.png
 
 digraph G {
 	fontname="BM JUA_TTF,Helvetica,Arial,sans-serif"
@@ -28,7 +28,7 @@ digraph G {
 	    	style=filled;
 			color=lightskyblue;
 	    	node [style=filled,color=white];
-            input [label="문자 손글씨", color=orange, shape=invhouse]
+            input [label="손글씨 음절 문자", color=orange, shape=invhouse]
 	    	label="input";
 	    }
     

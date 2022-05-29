@@ -6,7 +6,7 @@ from torchvision.transforms import ToTensor, ToPILImage
 from PIL import Image
 from PIL.ImageOps import invert
 
-from utils import get_file, unzip
+from utils.utils import get_file, unzip
 
 
 def read_json(label_path: str):

@@ -1,5 +1,5 @@
 from data import HWKoDataset
-from plot import set_font
+from utils.plot import set_font
 from preprocessing.functions import (
     get_data_from_train_set,
     save_n_piece,
@@ -20,7 +20,7 @@ from rich import print
 from rich.console import Console
 from rich.progress import track
 from rich.traceback import install
-from rich_ import new_progress
+from utils.rich import new_progress
 install()
 
 

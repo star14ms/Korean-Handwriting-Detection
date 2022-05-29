@@ -1,5 +1,5 @@
 from data import HWKoDataset
-from plot import set_font
+from utils.plot import set_font
 
 import torch
 import seaborn as sns

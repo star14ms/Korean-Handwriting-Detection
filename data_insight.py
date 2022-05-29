@@ -1,4 +1,4 @@
-from data import HWKoDataset
+from data import KoHWSentenceDataset
 from utils.plot import set_font
 
 import torch
@@ -106,7 +106,7 @@ def plot_brightness_gradient(x, brightness_list, title='', ylim=None, block=True
 
 
 if __name__ == '__main__':
-    train_set = HWKoDataset()
+    train_set = KoHWSentenceDataset()
     specimen_len = len(train_set)
     binrange = (20, 120)
 

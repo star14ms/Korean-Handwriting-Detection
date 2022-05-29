@@ -1,4 +1,4 @@
-from data import HWKoDataset
+from data import KoHWSentenceDataset
 from utils.plot import set_font
 from preprocessing.functions import (
     get_data_from_train_set,
@@ -30,7 +30,7 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 console = Console()
  
 
-train_set = HWKoDataset()
+train_set = KoHWSentenceDataset()
 n_corrct_n_seperated = 0
 
 kwargs = {

@@ -154,4 +154,5 @@ cython_debug/
 # data
 data/
 etc/
-image-data/
+data-syllable/
+fonts/*.ttf

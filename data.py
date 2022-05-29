@@ -1,12 +1,13 @@
 import os
 import json
 from torch.utils.data import Dataset
-from torchvision.transforms import ToTensor, ToPILImage
+from torchvision.transforms import ToTensor, ToPILImage, Compose
 
 from PIL import Image
 from PIL.ImageOps import invert
 
 from utils.utils import get_file, unzip
+import tools as hangul_tools
 
 
 def read_json(label_path: str):
@@ -16,8 +17,8 @@ def read_json(label_path: str):
     return json_data
 
 
-class HWKoDataset(Dataset):
-    def __init__(self, data_dir='./data/', transform=None, target_transform=None, train=True):
+class KoHWSentenceDataset(Dataset):
+    def __init__(self, data_dir='./data/', transform=Compose([ToTensor()]), target_transform=None, train=True):
         self.data_dir = data_dir
         self.img_dir = f'{data_dir}train/images/' if train else f'{data_dir}test/images/'
         self.transform = transform
@@ -38,7 +39,7 @@ class HWKoDataset(Dataset):
     def __getitem__(self, idx):
         file_name = self.data[idx]
         image = Image.open(self.img_dir + self.data[idx]).convert('L')
-        image = self.to_tensor(invert(image))
+        image = invert(image)
         label = [label for label in self.label if label["file_name"] == file_name][0]
         if self.transform:
             image = self.transform(image)
@@ -58,12 +59,53 @@ class HWKoDataset(Dataset):
         print('한국어 손글씨 데이터 다운로드 완료!')
 
 
+class KoSyllableDataset(Dataset):
+    def __init__(self, data_dir='./data-syllable/', transform=Compose([ToTensor()]), target_transform=None, train=True):
+        self.data_dir = data_dir
+        self.img_dir = f'{data_dir}hangul-images/'
+        self.transform = transform
+        self.target_transform = target_transform
+        self.to_tensor = ToTensor()
+        self.to_pil = ToPILImage()
+
+        if not os.path.exists(self.img_dir):
+            self.prepare()
+
+        self.data = tuple(os.listdir(self.img_dir))
+        self.label = read_json(f'{data_dir}label.json')['annotations']
+        self.len = len(self.data)
+
+    def __len__(self):
+        return self.len
+
+    def __getitem__(self, idx):
+        file_path = self.data[idx]
+        image = Image.open(self.img_dir + self.data[idx]).convert('L')
+        label = [label['label'] for label in self.label if label["file_path"] == file_path][0]
+        if self.transform:
+            image = self.transform(image)
+        if self.target_transform:
+            label = self.target_transform(label)
+        sample = (image, label,)
+        return sample
+    
+    @staticmethod
+    def prepare():
+        print('fonts/ 안의 폰트로 음절 데이터셋 생성 중...')
+
+        hangul_tools.generate_hangul_images()
+        hangul_tools.syllable_to_phoneme()
+
+        print('\n음절 데이터셋 생성 완료!')
+
+
 if __name__ == '__main__':
     from rich import print
 
-    train_set = HWKoDataset()
+    train_set = KoHWSentenceDataset()
+    data_set = KoSyllableDataset()
 
-    for x, t in train_set:
-        train_set.to_pil(x).show()
+    for x, t in data_set:
+        data_set.to_pil(x).show()
         print(t)
         input()

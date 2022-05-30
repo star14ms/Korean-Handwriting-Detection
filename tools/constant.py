@@ -6,6 +6,7 @@ from utils.unicode import CHAR_INITIALS, CHAR_MEDIALS, CHAR_FINALS
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
 
 LEN_LABEL = 2350
+FONT_SIZE = 48
 
 # Default data paths.
 DEFAULT_FONTS_DIR = os.path.join(SCRIPT_PATH, 

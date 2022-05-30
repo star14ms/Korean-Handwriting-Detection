@@ -15,7 +15,7 @@ if '__file__' in globals():
     import os, sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from tools.constant import DEFAULT_FONTS_DIR, DEFAULT_LABEL_FILE, DEFAULT_OUTPUT_DIR, LEN_LABEL
+from tools.constant import DEFAULT_FONTS_DIR, DEFAULT_LABEL_FILE, DEFAULT_OUTPUT_DIR, LEN_LABEL, FONT_SIZE
 from utils.rich import new_progress
 
 
@@ -65,7 +65,7 @@ def generate_hangul_images(label_file=DEFAULT_LABEL_FILE, fonts_dir=DEFAULT_FONT
         for font in fonts:
             total_count += 1
             image = Image.new('L', (IMAGE_WIDTH, IMAGE_HEIGHT), color=0)
-            font = ImageFont.truetype(font, 48)
+            font = ImageFont.truetype(font, FONT_SIZE)
             drawing = ImageDraw.Draw(image)
             w, h = drawing.textsize(character, font=font)
             drawing.text(

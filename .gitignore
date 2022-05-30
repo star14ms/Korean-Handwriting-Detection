@@ -157,3 +157,4 @@ etc/
 data-syllable/
 fonts/*.ttf
 *.pth
+save/

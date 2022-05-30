@@ -4,12 +4,12 @@
 ### source 
 > https://github.com/IBM/tensorflow-hangul-recognition
 
-![predict_1](./insight/predict_1.png)
-![predict_2](./insight/predict_2.png)
-![predict_3](./insight/predict_3.png)
-![predict_4](./insight/predict_4.png)
-![predict_5](./insight/predict_5.png)
-![predict_6](./insight/predict_6.png)
+![predict_1](./insight/predict/1.png)
+![predict_2](./insight/predict/2.png)
+![predict_3](./insight/predict/3.png)
+![predict_4](./insight/predict/4.png)
+![predict_5](./insight/predict/5.png)
+![predict_6](./insight/predict/6.png)
 ---
 
 ### 2. 손글씨 문장을 문자열로 바꾸기

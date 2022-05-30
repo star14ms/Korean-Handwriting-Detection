@@ -9,7 +9,7 @@ import argparse
 
 from utils.unicode import join_jamos
 from utils.rich import new_progress, console
-from utils.plot import show_img_and_scores, set_font, ys_plot_kwargs
+from utils.plot import show_img_and_scores, set_font
 from tools import to_chr
 
 

@@ -2,9 +2,6 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import numpy as np
 
-from utils.utils import softmax
-from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
-
 
 def set_font(font_path='', family=''):
     '''
@@ -16,7 +13,7 @@ def set_font(font_path='', family=''):
         font_name = family
     else:
         font_name = fm.FontProperties(fname=font_path, size=50).get_name()
-    
+    print(font_name)
     plt.rc('font', family=font_name)
 
 
@@ -85,6 +82,21 @@ def show_imgs_scores_softmaxes(xs, ys, title='', title_info=[], text_info=[], da
             plt.show()
 
 
+if __name__ == '__main__':
+    import matplotlib as mpl
+    print_font_list()
+
+    print(mpl.matplotlib_fname())
+    print(mpl.get_cachedir())
+    set_font(family='BM JUA_TTF')
+    set_font(family='NanumBarunpen')
+    exit()
+
+
+from utils.utils import softmax
+from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
+
+
 ys_plot_kwargs = [
     {
         'xticklabels': CHAR_INITIALS_PLUS,
@@ -116,12 +128,19 @@ def show_img_and_scores(x, *ys, ys_kwargs=ys_plot_kwargs, title='', dark_mode=Tr
     ax.set_title(title)
 
     plt.rcParams["font.size"] = 15
-    for idx, (y, y_kwargs) in enumerate(zip(ys, ys_kwargs)):
+    for ys_idx, (y, y_kwargs) in enumerate(zip(ys, ys_kwargs)):
+        sorted_idx = np.argsort(np.max(np.array(y), axis=0))
         while y.shape[0] == 1:
             y = y[0]
+
+        color = ['black'] * len(y)
+        color_order = ['purple','#1f77b4','green','orange','red']
+        for y_idx, color_name in zip(range(-1, -6, -1), color_order):
+            color[sorted_idx[y_idx]] = color_name
+
         x_ = np.arange(len(y))
-        ax = fig.add_subplot(len_ys, 2, (idx+1)*2, xticks=x_, yticks=np.round(sorted(y)[-3:], 1), ylabel='점수', **y_kwargs)
-        ax.bar(x_, y)
+        ax = fig.add_subplot(len_ys, 2, (ys_idx+1)*2, xticks=x_, yticks=np.round(sorted(y)[-3:], 1), ylabel='점수', **y_kwargs)
+        ax.bar(x_, y, color=color)
          
     plt.get_current_fig_manager().window.showMaximized()
     plt.tight_layout()
@@ -129,10 +148,3 @@ def show_img_and_scores(x, *ys, ys_kwargs=ys_plot_kwargs, title='', dark_mode=Tr
     plt.show()
 
 
-if __name__ == '__main__':
-    import matplotlib as mpl
-    print_font_list()
-
-    print(mpl.matplotlib_fname())
-    print(mpl.get_cachedir())
-    set_font(family='BM JUA_TTF')

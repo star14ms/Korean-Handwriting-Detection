@@ -1,9 +1,12 @@
 # Handwriting-Detection
  
 ### 1. 손글씨 음절을 문자열로 바꾸기
-source 
+### source 
 > https://github.com/IBM/tensorflow-hangul-recognition
 
+![predict_1](./insight/predict_1.png)
+![predict_2](./insight/predict_2.png)
+![predict_3](./insight/predict_3.png)
 ---
 
 ### 2. 손글씨 문장을 문자열로 바꾸기
@@ -11,6 +14,7 @@ source
 
 ---
 
+### 로드맵
 ![roadmap](./insight/roadmap/way2.png)
 
 ---

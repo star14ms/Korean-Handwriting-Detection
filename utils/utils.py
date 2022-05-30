@@ -2,6 +2,7 @@ import os
 import urllib.request
 from urllib.parse import quote
 import zipfile
+import numpy as np
 
 
 def makedirs(path: str): 
@@ -11,6 +12,19 @@ def makedirs(path: str):
         if not os.path.isdir(path): 
             raise
 
+
+def softmax(x):
+    y = np.exp(x - np.max(x))
+    f_x = y / np.sum(np.exp(x))
+    return f_x
+
+
+def softmax2d(x):
+    max = np.max(x, axis=1, keepdims=True) 
+    e_x = np.exp(x - max)
+    sum = np.sum(e_x, axis=1, keepdims=True)
+    f_x = e_x / sum 
+    return f_x
 
 # =============================================================================
 # download function

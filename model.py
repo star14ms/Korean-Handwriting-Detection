@@ -1,7 +1,8 @@
-from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
-
 import torch
 from torch import nn
+
+from save_feature_module import SaveFeatureModule
+from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
 
 
 def Conv2d_Norm_ReLU(in_chans, out_chans, kernel_size=3, stride=1, padding=1):
@@ -24,7 +25,7 @@ len_medial = len(CHAR_MEDIALS_PLUS)
 len_final = len(CHAR_FINALS_PLUS)
 
 
-class KoCtoP(nn.Module):
+class KoCtoP(SaveFeatureModule):
     def __init__(self) -> None:
         super().__init__()
         c1, c2, c3 = 64, 128, 256
@@ -73,12 +74,20 @@ class KoCtoP(nn.Module):
         )
 
     def forward(self, x):
-        x1 = self.conv1_pool(x) # [N, 64, 32, 32]
-        x2 = self.conv2_pool(x1) # [N, 128, 16, 16]
+        super().forward(x)
+        x = self.conv1_pool(x) # [N, 64, 32, 32]
+        x2 = self.conv2_pool(x) # [N, 128, 16, 16]
         x3 = self.conv3_pool(x2) # [N, 256, 8, 8]
+        
+        if self.saving_features_available:
+            self.save_feature_map('conv1', x)
+            self.save_feature_map('conv2', x2)
+            self.save_feature_map('conv3', x3)
+
         x2 = self.flatten(x2) # [N, 32768]
         x3 = self.flatten(x3) # [N, 16384]
         x = torch.cat([x2, x3], dim=1) # [N, 49152]
+        del x2, x3
 
         y1 = self.liner_initial(x)
         y2 = self.liner_medial(x)

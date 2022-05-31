@@ -140,6 +140,8 @@ if __name__ == '__main__':
     
     console.log('모델 로드 완료!')
 
+    model.show_feature_maps(test_set, 0, device)
+
     test_sample(test_set, model, device, random_sample=False)
     
     # loss_fn = nn.CrossEntropyLoss()

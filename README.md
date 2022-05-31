@@ -10,6 +10,13 @@
 ![](./insight/predict/4.png)
 ![](./insight/predict/5.png)
 ![](./insight/predict/6.png)
+
+---
+
+![](./insight/Feature_Map_가_1.png)
+![](./insight/Feature_Map_가_2.png)
+![](./insight/Feature_Map_가_3.png)
+
 ---
 
 ### 2. 손글씨 문장을 문자열로 바꾸기
@@ -18,6 +25,7 @@
 ![](./insight/Cutting_Sentence._Infopng.png)
 ![](./insight/Brightness_Gradient_Kernel_Width_1.png)
 ![](./insight/Brightness_Gradient_Kernel_Width_10.png)
+
 ---
 
 ### 로드맵

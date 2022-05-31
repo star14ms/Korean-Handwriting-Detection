@@ -78,7 +78,7 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
     return test_loss, correct * 100
 
 
-def predict(x, t, model, device, plot=True, description=None):
+def predict(x, t, model, device, plot=True, plot_when_wrong=True, description=None):
     model.eval()
     x = x.unsqueeze(0).to(device)
     
@@ -96,12 +96,14 @@ def predict(x, t, model, device, plot=True, description=None):
         text = 'test data {} - 예측: {} 정답: {}'.format(description, char_y, char_t)
     else:
         text = 'test data {} - 예측: {}'.format(description, char_y)
+        correct = None
     
-    if plot:
+    if plot and (not plot_when_wrong or (t is not None and not correct)):
         show_img_and_scores(x.cpu(), yi, ym, yf, title=text)
-    else:
-        console.log(text)
-        input()
+    
+    color = 'green' if correct else 'white' if correct is None else 'red'
+    text = f'[{color}]' + text + f'[/{color}]'
+    console.log(text)
     
     if t is not None:
         return char_y, correct
@@ -109,7 +111,7 @@ def predict(x, t, model, device, plot=True, description=None):
         return char_y
 
 
-def test_sample(test_set, model, device, random_sample=True):
+def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=True):
     model.eval()
     with torch.no_grad():
         idx = -1
@@ -122,7 +124,9 @@ def test_sample(test_set, model, device, random_sample=True):
                 except ValueError:
                     idx += 1
                     
-            predict(*test_set[idx], model, device, description=idx)
+            _, correct = predict(*test_set[idx], model, device, plot=True, plot_when_wrong=plot_when_wrong, description=idx)
+            if not correct or not plot_when_wrong:
+                model.show_feature_maps(test_set[idx][0], device, description=idx)
 
 
 if __name__ == '__main__':
@@ -140,10 +144,8 @@ if __name__ == '__main__':
     
     console.log('모델 로드 완료!')
 
-    model.show_feature_maps(test_set, 0, device)
+    test_sample(test_set, model, device, random_sample=False, plot_when_wrong=False)
 
-    test_sample(test_set, model, device, random_sample=False)
-    
     # loss_fn = nn.CrossEntropyLoss()
     # with new_progress() as progress:
         # test(model, test_loader, loss_fn, progress, show_wrong_info=False)

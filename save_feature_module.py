@@ -97,13 +97,13 @@ class SaveFeatureModule(nn.Module):
             plt.pause(0.01)
         plt.show()
     
-    def show_feature_maps(self, dataset, idx, device):
+    def show_feature_maps(self, x, device, description):
         self.eval()
         with torch.no_grad(), self.saving_features():
-            x = dataset[idx][0]
             x = x.reshape(1, *x.shape).to(device)
             self(x)
             
             for key, value in self.feature_maps.items():
-                self.imgs_show(value[0], filter_chans_show=True, title=key+' - ', title_img=x.cpu())
+                title = f'{description} {key} - '
+                self.imgs_show(value[0], filter_chans_show=True, title=title, title_img=x.cpu())
     

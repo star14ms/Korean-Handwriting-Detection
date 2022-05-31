@@ -65,7 +65,7 @@ def plot_sentence_cutting_info(x, letter_idxs, t=None, block=True):
     # 이미지 조각 정보 요약
     text = f'분해한 수: {len(letter_idxs)}'
     if t is not None:
-        text += f' | 어절 수: {len(t.split())} | 문자 수: {len(t)} | (match, w/h, w)'
+        text += f' | 어절 수: {len(t.split())} | 문자 수: {len(t)} | (w/h, w)'
     ax.text(0, -50, text, size=40)
     
     # 각 이미지 조각들

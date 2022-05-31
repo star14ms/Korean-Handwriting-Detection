@@ -8,7 +8,7 @@ from preprocessing.functions import (
     crop_blank,
 )
 from data_insight import (
-    plot_cutting_data_info,
+    plot_sentence_cutting_info,
     plot_brightness_gradient,
 )
 
@@ -37,12 +37,6 @@ kwargs = {
     'min_letter_len': 30,
 }
 
-# with new_progress() as progress:
-#     n_pieces_set = get_data_from_train_set(train_set, progress, func=save_n_piece, **kwargs)
-
-# correct_rate = get_corrct_rate_n_piece(train_set, n_pieces_set)
-# print(f'{correct_rate:.2f}% correct')
-
 
 for x, t in track(train_set, total=len(train_set)):
     # x, t = random.choice(train_set)
@@ -51,7 +45,15 @@ for x, t in track(train_set, total=len(train_set)):
 
     # sep_idxs2 = crop_blank(x, sep_idxs)
 
-    # plot_cutting_data_info(x, sep_idxs, t, block=True)
-    title = f'Brightness Gradient\n(kernel_width: {kwargs["kernel_width"]})'
+    plot_sentence_cutting_info(x, sep_idxs, t, block=False)
+
+    title = f'Image Brightness Gradient\n(kernel_width: {kwargs["kernel_width"]})'
     plot_brightness_gradient(x, brightness_list, title=title, ylim=100, block=True)
     # input()
+
+
+# with new_progress() as progress:
+#     n_pieces_set = get_data_from_train_set(train_set, progress, func=save_n_piece, **kwargs)
+
+# correct_rate = get_corrct_rate_n_piece(train_set, n_pieces_set)
+# print(f'{correct_rate:.2f}% correct')

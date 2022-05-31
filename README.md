@@ -4,17 +4,20 @@
 ### source 
 > https://github.com/IBM/tensorflow-hangul-recognition
 
-![predict_1](./insight/predict/1.png)
-![predict_2](./insight/predict/2.png)
-![predict_3](./insight/predict/3.png)
-![predict_4](./insight/predict/4.png)
-![predict_5](./insight/predict/5.png)
-![predict_6](./insight/predict/6.png)
+![](./insight/predict/1.png)
+![](./insight/predict/2.png)
+![](./insight/predict/3.png)
+![](./insight/predict/4.png)
+![](./insight/predict/5.png)
+![](./insight/predict/6.png)
 ---
 
 ### 2. 손글씨 문장을 문자열로 바꾸기
 > https://aihub.or.kr/problem_contest/nipa-learning-platform/1
 
+![](./insight/Cutting_Sentence._Infopng.png)
+![](./insight/Brightness_Gradient_Kernel_Width_1.png)
+![](./insight/Brightness_Gradient_Kernel_Width_10.png)
 ---
 
 ### 로드맵

@@ -14,7 +14,7 @@ digraph G {
 		style=filled;
 		color=lightgreen;
 		node [style=filled,color=white];
-        decomposition [label="문자 단위로 분해 | { 1.띄어쓰기 단위 | 2.문자 단위 }", color=orange, shape=record]
+        decomposition [label="음절 단위로 분해 | { 1.띄어쓰기 단위 | 2.음절 단위 }", color=orange, shape=record]
 		label="전처리";
 	}
 

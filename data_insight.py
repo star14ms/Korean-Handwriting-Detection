@@ -51,7 +51,7 @@ def get_spacing_lengths(x, min_brightness=3, min_space=20):
     return (*lens_space,)
 
 
-def plot_cutting_data_info(x, letter_idxs, t=None, block=True):
+def plot_sentence_cutting_info(x, letter_idxs, t=None, block=True):
     fig = plt.figure()
     fig.subplots_adjust(left=0.03, right=0.97, bottom=0.05, top=0.92, hspace=0.25, wspace=0.25)
     n_col = 3
@@ -65,7 +65,6 @@ def plot_cutting_data_info(x, letter_idxs, t=None, block=True):
     # 이미지 조각 정보 요약
     text = f'분해한 수: {len(letter_idxs)}'
     if t is not None:
-        t = t['text']
         text += f' | 어절 수: {len(t.split())} | 문자 수: {len(t)} | (match, w/h, w)'
     ax.text(0, -50, text, size=40)
     
@@ -89,8 +88,13 @@ def plot_brightness_gradient(x, brightness_list, title='', ylim=None, block=True
     xs, ys = np.arange(len(brightness_list)), brightness_list
 
     fig = plt.figure()
+    fig.subplots_adjust(top=0.86, bottom=0.105, left=0.068, right=0.988, hspace=0.134, wspace=0.2)
+    
+    plt.rcParams["font.size"] = 15
     ax = fig.add_subplot(111)
     ax.set_title(title, size=40)
+    ax.set_xlabel('image width', size=40)
+    ax.set_ylabel('brightness', size=40)
     ax.set_xlim(xlim)
     ax.set_ylim(ylim)
     ax.plot(xs, ys)
@@ -100,8 +104,8 @@ def plot_brightness_gradient(x, brightness_list, title='', ylim=None, block=True
     ax.imshow(x[0])
     # ax.sharex(axes1)
     
-    # plt.tight_layout()
     plt.get_current_fig_manager().window.showMaximized()
+    # plt.tight_layout()
     plt.show(block=block)
 
 

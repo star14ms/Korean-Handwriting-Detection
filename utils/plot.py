@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import numpy as np
+from utils.rich import console
 
 
 def set_font(font_path='', family=''):
@@ -129,6 +130,8 @@ def show_img_and_scores(x, *ys, ys_kwargs=ys_plot_kwargs, title='', dark_mode=Tr
 
     plt.rcParams["font.size"] = 15
     for ys_idx, (y, y_kwargs) in enumerate(zip(ys, ys_kwargs)):
+        if y.shape[0] != 1:
+            y = y.reshape(1, *y.shape)
         sorted_idx = np.argsort(np.max(np.array(y), axis=0))
         while y.shape[0] == 1:
             y = y[0]

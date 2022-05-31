@@ -1,6 +1,6 @@
 import os
 
-from utils.unicode import CHAR_INITIALS, CHAR_MEDIALS, CHAR_FINALS
+from utils.unicode import join_jamos, CHAR_INITIALS, CHAR_MEDIALS, CHAR_FINALS
 
 
 SCRIPT_PATH = os.path.dirname(os.path.abspath(__file__))
@@ -33,3 +33,10 @@ to_label = {
     'm': dict(zip(CHAR_MEDIALS_PLUS, range(len(CHAR_MEDIALS_PLUS)))), # 중성
     'f': dict(zip(CHAR_FINALS_PLUS, range(len(CHAR_FINALS_PLUS)))), # 종성
 }
+
+
+def label_to_syllable(ti, tm, tf):
+    label_yi = to_chr['i'][ti]
+    label_ym = to_chr['m'][tm]
+    label_yf = to_chr['f'][tf]
+    return join_jamos(label_yi + label_ym + label_yf)

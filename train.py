@@ -45,6 +45,7 @@ save_dir = 'save/'
 makedirs(save_dir)
 
 file_name = args.load_model
+start = int(file_name.split('-')[-1].replace('.pth','')) if file_name else 0
 model = KoCtoP().to(device)
 loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
@@ -90,7 +91,7 @@ def train(model, train_loader, loss_fn, optimizer, progress):
         if current % 10000 == 0:
             avg_loss = train_loss / current
             avg_acc = correct / current * 100
-            file_name = model.__class__.__name__ + f'-acc_{(avg_acc):>0.3f}%-loss_{avg_loss:>6f}-{current}.pth'
+            file_name = model.__class__.__name__ + f'-acc_{(avg_acc):>0.3f}%-loss_{avg_loss:>6f}-{start+current}.pth'
             torch.save(model.state_dict(), save_dir+file_name)
         
             progress.log(f'Saved PyTorch Model State to {save_dir+file_name}')

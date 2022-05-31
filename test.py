@@ -68,14 +68,14 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
             progress.update(task_id, description=f'iter {current}/{size}', advance=len(x))
 
             if iter % 10 == 0:
-                progress.log(f"loss: {loss.item():>6f} acc: {correct/current*100:>0.3f}%")
+                progress.log(f"loss: {test_loss/current:>6f} acc: {correct/current*100:>0.3f}%")
 
     test_loss /= current
-    correct /= current * 100
-    progress.log(f"Test Error: \n Accuracy: {correct:>0.3f}%, Avg loss: {test_loss:>6f} \n")
+    correct /= current
+    progress.log(f"Test Error: \n Accuracy: {correct*100:>0.3f}%, Avg loss: {test_loss:>6f} \n")
     progress.remove_task(task_id)
 
-    return test_loss, correct
+    return test_loss, correct * 100
 
 
 def predict(x, t, model, device, plot=True, description=None):

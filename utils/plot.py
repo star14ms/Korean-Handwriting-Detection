@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 import numpy as np
-from utils.rich import console
 
 
 def set_font(font_path='', family=''):

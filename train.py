@@ -21,7 +21,7 @@ parser.add_argument('--load-model', type=str, dest='load_model',
                         help='이어서 학습시킬 모델 경로 (model weight path to load)')
 parser.add_argument('--epoch', type=int, dest='epochs',
                         default=1,
-                        help='학습 시킬 바퀴 수 (num epochs)')
+                        help='몇 바퀴 학습시킬 건지 (num epochs)')
 parser.add_argument('--batch-size', type=int, dest='batch_size',
                         default=50,
                         help='묶어서 학습할 숫자 (batch size)')

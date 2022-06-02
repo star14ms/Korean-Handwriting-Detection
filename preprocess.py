@@ -34,7 +34,7 @@ kwargs = {
     'kernel_width': 10,
     'min_brightness': 20,
     'min_space': 1,
-    'min_letter_len': 30,
+    'min_letter_len': 1,
 }
 
 

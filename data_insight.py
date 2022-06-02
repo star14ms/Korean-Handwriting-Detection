@@ -9,10 +9,6 @@ import numpy as np
 from rich.progress import track
 import os
 
-set_font(family='BM JUA_TTF')
-
-os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
-
 
 def get_spacing_lengths(x, min_brightness=3, min_space=20):
     '''
@@ -110,6 +106,9 @@ def plot_brightness_gradient(x, brightness_list, title='', ylim=None, block=True
 
 
 if __name__ == '__main__':
+    set_font(family='BM JUA_TTF')
+    os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+    
     train_set = KoHWSentenceDataset()
     specimen_len = len(train_set)
     binrange = (20, 120)

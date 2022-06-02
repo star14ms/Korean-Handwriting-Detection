@@ -13,7 +13,7 @@ def set_font(font_path='', family=''):
         font_name = family
     else:
         font_name = fm.FontProperties(fname=font_path, size=50).get_name()
-    print(font_name)
+    # print(font_name)
     plt.rc('font', family=font_name)
 
 

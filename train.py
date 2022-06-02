@@ -24,7 +24,7 @@ parser.add_argument('--epoch', type=int, dest='epochs',
                         help='학습 시킬 바퀴 수 (num epochs)')
 parser.add_argument('--batch-size', type=int, dest='batch_size',
                         default=50,
-                        help='묶어서 학습할 수 (batch size)')
+                        help='묶어서 학습할 숫자 (batch size)')
 args = parser.parse_args()
 
 

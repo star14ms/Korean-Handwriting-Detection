@@ -153,8 +153,9 @@ cython_debug/
 
 # data
 data/
-etc/
 data-syllable/
+etc/
 fonts/*.ttf
 *.pth
-save/
+*.csv
+!save/KoCtoP-acc_14.285%-loss_0.088537-420000.pth

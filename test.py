@@ -1,3 +1,4 @@
+from re import L
 from data import KoSyllableDataset
 from model import KoCtoP
 
@@ -10,16 +11,6 @@ import argparse
 from utils.rich import new_progress, console
 from utils.plot import show_img_and_scores, set_font
 from tools.constant import label_to_syllable
-
-
-parser = argparse.ArgumentParser()
-parser.add_argument('--load-model', type=str, dest='load_model',
-                        default='save/KoCtoP-acc_14.285%-loss_0.088537-420000.pth',
-                        help='model weight path to load')
-parser.add_argument('--batch-size', type=int, dest='batch_size',
-                        default=50,
-                        help='batch size')
-args = parser.parse_args()
 
 
 def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
@@ -130,7 +121,17 @@ def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=Tru
 
 
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--load-model', type=str, dest='load_model',
+                            default='save/KoCtoP-acc_14.285%-loss_0.088537-420000.pth',
+                            help='불러올 모델 경로 (model weight path to load)')
+    parser.add_argument('--batch-size', type=int, dest='batch_size',
+                            default=50,
+                            help='묶어서 테스트할 숫자 (batch size)')
+    args = parser.parse_args()
+
     set_font(family='BM JUA_TTF')
+
     
     device = "cuda" if torch.cuda.is_available() else "cpu"
     console.log("Using [green]{}[/green] device\n".format(device))
@@ -141,7 +142,6 @@ if __name__ == '__main__':
     
     model = KoCtoP().to(device)
     model.load_state_dict(torch.load(args.load_model))
-    
     console.log('모델 로드 완료!')
 
     test_sample(test_set, model, device, random_sample=False, plot_when_wrong=False)

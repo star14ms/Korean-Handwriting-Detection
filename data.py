@@ -108,7 +108,7 @@ if __name__ == '__main__':
 
     sentence_set = KoHWSentenceDataset()
     sentence_set2 = KoHWSentenceDataset(train=False)
-    train_set = KoSyllableDataset()
+    train_set = KoSyllableDataset() # syllable: 음절
     test_set = KoSyllableDataset(train=False)
 
     for x, t in test_set:

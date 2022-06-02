@@ -18,10 +18,13 @@ install()
 parser = argparse.ArgumentParser()
 parser.add_argument('--load-model', type=str, dest='load_model',
                         default=None,
-                        help='model weight path to load')
+                        help='이어서 학습시킬 모델 경로 (model weight path to load)')
+parser.add_argument('--epoch', type=int, dest='epochs',
+                        default=1,
+                        help='학습 시킬 바퀴 수 (num epochs)')
 parser.add_argument('--batch-size', type=int, dest='batch_size',
                         default=50,
-                        help='batch size')
+                        help='묶어서 학습할 수 (batch size)')
 args = parser.parse_args()
 
 
@@ -34,7 +37,7 @@ console.log("Using [green]{}[/green] device\n".format(device))
 
 
 batch_size = args.batch_size
-train_set = KoSyllableDataset() # syllable: 음절
+train_set = KoSyllableDataset()
 test_set = KoSyllableDataset(train=False)
 train_loader = DataLoader(train_set, batch_size, shuffle=True)
 test_loader = DataLoader(test_set, batch_size, shuffle=True)
@@ -102,7 +105,7 @@ def train(model, train_loader, loss_fn, optimizer, progress):
     return train_loss, correct * 100
 
 
-epochs = 1
+epochs = args.epochs
 
 with new_progress() as progress:
     task_id = progress.add_task(f'epoch 1/{epochs}', total=epochs)

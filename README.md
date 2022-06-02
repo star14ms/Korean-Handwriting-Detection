@@ -1,6 +1,7 @@
 # Handwriting-Detection
 
-### 1. 손글씨 음절을 문자열로 바꾸기
+### 1. 손글씨 음절을 문자열로 바꾸기 (완성)
+
 ### source 
 > https://github.com/IBM/tensorflow-hangul-recognition
 
@@ -53,14 +54,17 @@ pip install -r requirements.txt
 
 > 음절 데이터: data-syllable/ 경로에 생성됨
 
-### 음절 데이터셋 생성 방법
 
-> [fonts/](fonts/) 안의 폰트로 음절 데이터셋 생성
+### 문장 데이터셋 - 자동 생성
 
-> fonts/ 에 한글 폰트 추가 필요 [Fonts Download Link](https://hangeul.naver.com/2021/fonts)
+### 음절 데이터셋 - 반자동 생성
+
+> data.py 실행 시 [fonts/](fonts/) 안의 폰트들로 음절 데이터셋 생성됨
+
+> [fonts/](fonts/) 에 한글 폰트 추가 필요 [Fonts Download Link](https://hangeul.naver.com/2021/fonts)
 
 ```python
-# 이 파일만 실행시키면 됩니다.
+# 그 후에 이 파일만 실행시키면 됩니다.
 python data.py # 데이터 없으면 생성시킴
 ```
 
@@ -73,20 +77,22 @@ python data.py # 데이터 없으면 생성시킴
 
 1. fonts/ 안의 폰트들로 음절 이미지 생성
 2. 음절을 음소로 분류한 라벨 생성
-3. 전체 데이터셋에서 Test 용 데이터셋 분리
+3. 전체 데이터셋에서 Test용 데이터셋 분리
 ---
 
 ### 3. 학습
 ```python
-python train.py
+# epoch: 몇 바퀴 학습시킬 건지
+# batch_size: 묶어서 학습시킬 수
+python train.py --epoch 1 --batch-size 50
 ```
 
 ---
 
-### 4. 추론
+### 4. 테스트
 
 ```python 
-python test.py
+python test.py --load-model <model path> --batch-size 50
 ```
 
 ---

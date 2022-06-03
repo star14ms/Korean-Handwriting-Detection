@@ -89,7 +89,7 @@ def train(model, train_loader, loss_fn, optimizer, progress):
         progress.update(task_id, description=f'iter {current}/{size}', advance=len(x))
         
         if iter % 10 == 0:
-            progress.log(f"loss: {loss.item()/batch_size:>6f}")
+            progress.log(f"loss: {loss.item()/len(x):>6f}")
 
         if current % 10000 == 0:
             avg_loss = train_loss / current

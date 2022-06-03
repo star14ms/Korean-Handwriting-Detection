@@ -61,16 +61,16 @@ def plot_sentence_cutting_info(x, letter_idxs, t=None, block=True):
     # 이미지 조각 정보 요약
     text = f'분해한 수: {len(letter_idxs)}'
     if t is not None:
-        text += f' | 어절 수: {len(t.split())} | 문자 수: {len(t)} | (w/h, w)'
+        text += f' | 어절 수: {len(t.split())} | 문자 수: {len(t)} | (h/w, w)'
     ax.text(0, -50, text, size=40)
     
     # 각 이미지 조각들
     for idx, (yt, yb, xl, xr) in enumerate(letter_idxs):
         x_piece = x[:, yt:yb, xl:xr]
-        wh_rate = (xr-xl) / (yb-yt)
+        wh_rate = (yb-yt) / (xr-xl)
         info = f'{wh_rate:.2f}, {xr-xl}'
         ax = fig.add_subplot(n_col+1, n_row, n_row+idx+1, xticks=[], yticks=[])
-        ax.text(0, -20, info, size=20, ha="left", color='red' if wh_rate < 0.33 else 'black')
+        ax.text(0, -20, info, size=20, ha="left", color='red' if wh_rate > 3 else 'black')
         ax.imshow(x_piece[0], cmap=cmap)
 
     fig.set_size_inches(12.8, 7.6)

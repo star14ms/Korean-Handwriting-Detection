@@ -1,5 +1,5 @@
-from re import L
 from data import KoSyllableDataset
+from data import KoHWSentenceDataset
 from model import KoCtoP
 
 import torch
@@ -7,6 +7,7 @@ from torch import nn
 from torch.utils.data import DataLoader
 import random
 import argparse
+import sys
 
 from utils.rich import new_progress, console
 from utils.plot import show_img_and_scores, set_font
@@ -69,18 +70,18 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
     return test_loss, correct * 100
 
 
-def predict(x, t, model, device, plot=True, plot_when_wrong=True, description=None):
+def predict(x, t, model, device, plot=False, plot_when_wrong=True, description=None, verbose=False):
     model.eval()
     x = x.unsqueeze(0).to(device)
     
     yi, ym, yf = model(x)
     yi, ym, yf = yi.cpu(), ym.cpu(), yf.cpu()
-    ti, tm, tf = t.values()
     pi, pm, pf = yi.argmax(1), ym.argmax(1), yf.argmax(1)
 
     char_y = label_to_syllable(pi.item(), pm.item(), pf.item())
     
     if t is not None:
+        ti, tm, tf = t.values()
         char_t = label_to_syllable(ti, tm, tf)
         correct = (pi==ti and pm==tm and pf==tf)
     
@@ -92,9 +93,10 @@ def predict(x, t, model, device, plot=True, plot_when_wrong=True, description=No
     if plot and (not plot_when_wrong or (t is not None and not correct)):
         show_img_and_scores(x.cpu(), yi, ym, yf, title=text)
     
-    color = 'green' if correct else 'white' if correct is None else 'red'
-    text = f'[{color}]' + text + f'[/{color}]'
-    console.log(text)
+    if verbose:
+        color = 'green' if correct else 'white' if correct is None else 'red'
+        text = f'[{color}]' + text + f'[/{color}]'
+        console.log(text)
     
     if t is not None:
         return char_y, correct
@@ -120,6 +122,36 @@ def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=Tru
                 model.show_feature_maps(test_set[idx][0], device, description=idx)
 
 
+def predict_sentence(sentence_set, model, device):
+    to_pil = sentence_set.to_pil
+    to_tensor = sentence_set.to_tensor
+    
+    for x, _ in sentence_set:
+        w = x.shape[2] # (C, H, W)
+        h = x.shape[1]
+        to_pil(x).show()
+        before_pred = None
+        same_pred_stack = 0
+
+        for start_x in range(0, w-h+1, 2):
+            x_piece = x[:,:,start_x:start_x+h]
+            x_piece = to_pil(x_piece).resize((64, 64))
+            x_piece = to_tensor(x_piece)
+            pred = predict(x_piece, t=None, model=model, device=device)
+
+            if pred == before_pred:
+                same_pred_stack += 1
+                if same_pred_stack == 2:
+                    print(pred, end='')
+            else:
+                same_pred_stack = 0
+
+            sys.stdout.flush()
+            before_pred = pred
+        
+    input()
+
+
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load-model', type=str, dest='load_model',
@@ -139,6 +171,7 @@ if __name__ == '__main__':
     batch_size = args.batch_size
     test_set = KoSyllableDataset(train=False)
     test_loader = DataLoader(test_set, batch_size, shuffle=False)
+    sentence_set = KoHWSentenceDataset()
     
     model = KoCtoP().to(device)
     model.load_state_dict(torch.load(args.load_model))

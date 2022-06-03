@@ -2,6 +2,7 @@ import torch
 import matplotlib.pyplot as plt 
 import random
 import numpy as np
+import itertools
 
 from rich import print
 
@@ -61,9 +62,9 @@ def separate_by_space(x, kernel_width=1, min_brightness=3, min_space=50, min_let
     
     # 얻어낸 데이터 처리
     if isinstance(result, list) and index is not None:
-        result[index] = (*sep_idxs,)
+        result[index] = sep_idxs
     else:
-        return (*sep_idxs,), brightness_list
+        return sep_idxs, brightness_list
     
     if progress is not None:
         progress.update(task_id, advance=1)
@@ -129,25 +130,49 @@ def save_n_piece(x, kernel_width=1, min_brightness=3, min_space=50, min_letter_l
         progress.update(task_id, advance=1)
 
 
-def crop_blank_piece(x_piece, sep_idx, min_brightness=3):
+def merge_pieces(sep_idxs, hw_rate_range=(0.5, 7)):
+    hw_rate_min = hw_rate_range[0]
+    hw_rate_max = hw_rate_range[1]
+
+    mask = [True for _ in sep_idxs]
+
+    for i, sep_idx in enumerate(sep_idxs[:]):
+        b, h, l, r = sep_idx
+        hw_rate = round((h-b) / (r-l), 2)
+
+        if hw_rate > hw_rate_max and i != 0:
+            pre_l = sep_idxs[i-1][2]
+            sep_idxs[i] = (b, h, pre_l, r)
+            mask[i-1] = False
+
+    sep_idxs = list(itertools.compress(sep_idxs, mask))
+    
+    return sep_idxs
+
+
+def crop_blank_piece(x_piece, sep_idx, min_brightness=10):
     base_yt, _, base_xl, _ = sep_idx
     row_len = x_piece.shape[2] # (C, H, (W))
     col_len = x_piece.shape[1] # (C, (H), W)
 
     yt = 0
-    while torch.sum(x_piece[:, yt:yt+1, :]) < min_brightness and yt < col_len:
+    while torch.sum(x_piece[:, yt:yt+1, :]) < min_brightness and \
+          torch.sum(x_piece[:, yt:yt+10, :]) < min_brightness*2 and yt < col_len:
         yt += 1
 
     yb = col_len
-    while torch.sum(x_piece[:, yb:yb+1, :]) < min_brightness and yb >= 0:
+    while torch.sum(x_piece[:, yt:yt+1, :]) < min_brightness and \
+          torch.sum(x_piece[:, yb:yb+10, :]) < min_brightness*2 and yb >= 0:
         yb -= 1
 
     xl = 0
-    while torch.sum(x_piece[:, :, xl:xl+1]) < min_brightness and xl < row_len:
+    while torch.sum(x_piece[:, yt:yt+1, :]) < min_brightness and \
+          torch.sum(x_piece[:, :, xl:xl+10]) < min_brightness*2 and xl < row_len:
         xl += 1
 
     xr = row_len
-    while torch.sum(x_piece[:, :, xr:xr+1]) < min_brightness and xr >= 0:
+    while torch.sum(x_piece[:, yt:yt+1, :]) < min_brightness and \
+          torch.sum(x_piece[:, :, xr:xr+10]) < min_brightness*2 and xr >= 0:
         xr -= 1
 
     return (base_yt + yt, base_yt + yb, base_xl + xl, base_xl + xr)

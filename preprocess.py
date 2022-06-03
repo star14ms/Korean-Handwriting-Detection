@@ -5,6 +5,7 @@ from preprocessing.functions import (
     save_n_piece,
     get_corrct_rate_n_piece,
     separate_by_space,
+    merge_pieces,
     crop_blank,
 )
 from data_insight import (
@@ -42,7 +43,7 @@ for x, t in track(train_set, total=len(train_set)):
     # x, t = random.choice(train_set)
     # x, t = train_set[0]
     sep_idxs, brightness_list = separate_by_space(x, **kwargs)
-
+    # sep_idxs = merge_pieces(sep_idxs)
     # sep_idxs2 = crop_blank(x, sep_idxs)
 
     plot_sentence_cutting_info(x, sep_idxs, t, block=False)

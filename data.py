@@ -126,10 +126,10 @@ if __name__ == '__main__':
 
     sentence_set = KoHWSentenceDataset()
     sentence_set2 = KoHWSentenceDataset(train=False)
-    train_set = KoSyllableDataset() # syllable: 음절
-    test_set = KoSyllableDataset(train=False)
+    # train_set = KoSyllableDataset() # syllable: 음절
+    # test_set = KoSyllableDataset(train=False)
 
-    for x, t in test_set:
-        test_set.to_pil(x).show()
+    for x, t in sentence_set:
+        sentence_set.to_pil(x).show()
         print(t)
         input()

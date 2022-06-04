@@ -1,21 +1,125 @@
+import os
+import json
 import collections
-import torch
+from PIL import Image
+from glob import glob
 import io
+
+import torch
+from torch.utils import data
+import torchvision.transforms as transforms
 
 from utils.unicode import split_syllables, join_jamos
 
 
-compat_jamo = ''.join(chr(i) for i in range(12593, 12643+1))
-letter = " ,.()\'\"?!01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" + compat_jamo
+class CustomDataset(data.Dataset):
+    """ 필수 함수 : 
+        - __init__ : 초기화
+        - __len__ : 데이터셋(input)의 길이 반환
+        - __getitem__ : 데이터셋을 인덱스로 불러옴
+        
+        그 외 함수:
+        - get_root : 경로 반환
+        - get_img_path : 인덱스 출력
+    """
+ 
+    def __init__(self, root, phase='train', transform=None, target_transform=None):
+        # 경로 생성 후 생성된 경로의 이미지 파일을 불러와 정렬한 다음 저장
+        self.root = os.path.join(root, phase)
+        self.labels = []
+        self.transform = transform
+        self.target_transform = target_transform
+        annotations = None
 
+        if phase == 'val':
+            self.root = os.path.join(root, 'train')
+        # 라벨 데이터인 json 파일을 불러와 저장한 다음 json 파일 안의 딕셔너리를 파일 이름 순으로 정렬
+        with open(os.path.join(self.root, 'labels.json'), 'r', encoding="UTF-8") as label_json :
+            label_json = json.load(label_json)
+            annotations = label_json['annotations']
+        annotations = sorted(annotations, key=lambda x: x['file_name'])
+        
+        self.imgs = sorted(glob(self.root + '/images' + '/*.png'))
+        
+        
+        if phase == 'train':
+            annotations = annotations[:int(0.9*len(annotations))]
+            self.imgs = self.imgs[:int(0.9*len(self.imgs))]
+        elif phase == 'val':
+            annotations = annotations[int(0.9*len(annotations)):]
+            self.imgs = self.imgs[int(0.9*len(self.imgs)):]
 
-label_path = 'labels/2350-common-hangul.txt'
-with io.open(label_path, 'r', encoding='utf-8') as f:
-    labels = f.read().splitlines()
+            
+        for anno in annotations :
+            if phase == 'test' :
+                self.labels.append('dummy')
+            else :
+                self.labels.append(anno['text'])
+        
+        
 
-basic_letters = ' ,.()\'\"?!01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
-hangul_letters = ''.join(labels)
-letter_baseline = basic_letters + hangul_letters
+    # training set의 손글씨 이미지들의 갯수 출력
+    def __len__(self):
+        return len(self.imgs)
+
+    # 데이터 셋의 idx 번째 샘플 데이터를 반환
+    def __getitem__(self, index):
+        assert index <= len(self), 'index range error'
+        img_path = self.imgs[index]
+        # 이미지 모드 변경. 흰 배경에 검은 글씨 뿐이므로 그레이 스케일('L') 지정
+        img = Image.open(img_path).convert('L')
+        
+        label = self.labels[index]
+
+        if self.transform is not None:
+            img = self.transform(img)
+
+        if self.target_transform is not None:
+            label = self.target_transform(label)
+
+        return (img, label)
+    
+    # CustomDataset 클래스의 __init__ 메서드에서 정의한 self.root 출력
+    def get_root(self) :
+        return self.root
+
+    # 해당 index의 이미지 파일의 경로 출력
+    def get_img_path(self, index) :
+        return self.imgs[index]
+    
+
+# 이미지 사이즈 변경(resize), 이중선형보간(bilinear interpolation), 텐서 변환, 표준화(normalize) 
+class resizeNormalize(object):
+
+    def __init__(self, size, interpolation=Image.BILINEAR):
+        self.size = size
+        self.interpolation = interpolation
+        self.toTensor = transforms.ToTensor()
+
+    def __call__(self, img):
+        img = img.resize(self.size, self.interpolation)
+        img = self.toTensor(img)
+        img.sub_(0.5).div_(0.5)
+        return img
+
+    
+class alignCollate(object): 
+
+    def __init__(self, imgH=32, imgW=100):
+        self.imgH = imgH
+        self.imgW = imgW
+
+    def __call__(self, batch):
+        images, labels = zip(*batch)
+       
+        imgH = self.imgH
+        imgW = self.imgW
+
+        transform = resizeNormalize((imgW, imgH))
+        images = [transform(image) for image in images]
+        images = torch.cat([t.unsqueeze(0) for t in images], 0)
+
+        return images, labels
 
 
 class strLabelConverter(object):
@@ -96,7 +200,7 @@ class strLabelConverter(object):
                         t[index:index + l], torch.IntTensor([l]), raw=raw))
                 index += l
             return texts
-        
+       
         
 class strLabelConverter_baseline(object):
   
@@ -177,5 +281,23 @@ class strLabelConverter_baseline(object):
             return texts
 
 
-converter = strLabelConverter(letter, ignore_case=False)
-converter_baseline = strLabelConverter_baseline(letter_baseline)
+def loadData(v, data):
+    d_size = data.size()
+    v.resize_(d_size).copy_(data)
+
+
+# compat_jamo = ''.join(chr(i) for i in range(12593, 12643+1))
+# letter = " ,.()\'\"?!01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ" + compat_jamo
+
+
+# label_path = 'labels/2350-common-hangul.txt'
+# with io.open(label_path, 'r', encoding='utf-8') as f:
+#     labels = f.read().splitlines()
+
+# basic_letters = ' ,.()\'\"?!01234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
+# hangul_letters = ''.join(labels)
+# letter_baseline = basic_letters + hangul_letters
+
+
+# converter = strLabelConverter(letter, ignore_case=False)
+# converter_baseline = strLabelConverter_baseline(letter_baseline)

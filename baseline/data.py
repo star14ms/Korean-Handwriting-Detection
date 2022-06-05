@@ -34,10 +34,12 @@ class CustomDataset(data.Dataset):
         if phase == 'val':
             self.root = os.path.join(root, 'train')
         # 라벨 데이터인 json 파일을 불러와 저장한 다음 json 파일 안의 딕셔너리를 파일 이름 순으로 정렬
-        with open(os.path.join(self.root, 'labels.json'), 'r', encoding="UTF-8") as label_json :
-            label_json = json.load(label_json)
-            annotations = label_json['annotations']
-        annotations = sorted(annotations, key=lambda x: x['file_name'])
+        
+        if phase != 'test':
+            with open(os.path.join(self.root, 'labels.json'), 'r', encoding="UTF-8") as label_json :
+                label_json = json.load(label_json)
+                annotations = label_json['annotations']
+            annotations = sorted(annotations, key=lambda x: x['file_name'])
         
         self.imgs = sorted(glob(self.root + '/images' + '/*.png'))
         
@@ -49,12 +51,10 @@ class CustomDataset(data.Dataset):
             annotations = annotations[int(0.9*len(annotations)):]
             self.imgs = self.imgs[int(0.9*len(self.imgs)):]
 
-            
-        for anno in annotations :
-            if phase == 'test' :
-                self.labels.append('dummy')
-            else :
-                self.labels.append(anno['text'])
+        if phase == 'test':
+            self.labels = ['dummy' for _ in self.imgs]
+        else:
+            self.labels = [anno['text'] for anno in annotations]
         
         
 

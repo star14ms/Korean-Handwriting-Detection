@@ -1,8 +1,8 @@
 import os
-import json
 import pandas as pd
 import argparse
 import csv
+from datetime import datetime
 
 import torch
 from torch.utils.data import DataLoader
@@ -11,7 +11,7 @@ from torch.autograd import Variable
 
 from baseline.data import CustomDataset, alignCollate, strLabelConverter
 from baseline.model import CRNN, weights_init
-from baseline.common import train, test, validation
+from baseline.common import train, test, validation, create_json
 from baseline.save import load_model
 from utils.rich import new_progress, console
 
@@ -107,10 +107,10 @@ total_params = sum(p.numel() for p in new_model.parameters())
 console.log("num of parameter : ",total_params)
 trainable_params = sum(p.numel() for p in new_model.parameters() if p.requires_grad)
 console.log("num of trainable_ parameter :",trainable_params)
-console.log("------------------------------------------------------------\n")
+console.log("------------------------------------------------------------")
 
 
-console.log('train start')
+console.log('train start\n')
 params = [p for p in new_model.parameters() if p.requires_grad]
 optimizer = optim.Adam(params, lr=lr, betas=(0.5, 0.999))
 lr_scheduler = optim.lr_scheduler.StepLR(optimizer,step_size=40,gamma=0.1)
@@ -119,14 +119,15 @@ with new_progress() as progress:
 
 
 console.log('test start')
-test_dataset = CustomDataset(DATASET_PATH, phase='train')
+test_dataset = CustomDataset(DATASET_PATH, phase='test')
 test_loader = DataLoader(test_dataset, batch_size=batch, shuffle=False, collate_fn=alignCollate(imgH=imgH, imgW=imgW))
 load_model(model_name, new_model)
-test_imgs, test_preds = test(new_model, device, test_loader, images, texts, lengths, converter, prediction_dir, progress)
+with new_progress() as progress:
+    test_imgs, test_preds = test(new_model, device, test_loader, images, texts, lengths, converter, prediction_dir, progress)
 
 
-
-validation(new_model, device, val_loader, images, texts, lengths, converter, prediction_dir)
+with new_progress() as progress:
+    validation(new_model, device, val_loader, images, texts, lengths, converter, prediction_dir, progress)
 
 
 # 제출 결과 저장
@@ -138,4 +139,7 @@ for i,img in enumerate(test_imgs):
 submit.head(10)
 
 # 제출 파일 제작
-submit.to_csv(f'save/pred_220603_w{imgW}.csv', index=False, quoting=csv.QUOTE_NONE, sep='|')
+today = datetime.now().strftime('%m%d%y')
+create_json(test_imgs, test_preds, file_path=f'save/pred_{today}_h{imgH}_w{imgW}.json')
+
+# submit.to_csv(f'save/pred_{today}_h{imgH}_w{imgW}.csv', index=False, quoting=csv.QUOTE_NONE, sep='\t')

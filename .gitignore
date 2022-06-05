@@ -158,4 +158,5 @@ etc/
 fonts/*.ttf
 *.pth
 *.csv
+save/*.json
 !save/KoCtoP-acc_14.285%-loss_0.088537-420000.pth

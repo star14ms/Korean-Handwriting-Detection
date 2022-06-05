@@ -1,5 +1,6 @@
 import os
 import torch
+from utils.rich import console
 
 
 model_dir = 'save/' 
@@ -12,8 +13,8 @@ def save_model(model_name, model, optimizer, scheduler):
         'scheduler': scheduler.state_dict()
     }
     torch.save(state, os.path.join(model_dir, model_name + '.pth'))
-    print(os.path.join(model_dir, model_name + '.pth'))
-    print('model saved')    
+    console.log(os.path.join(model_dir, model_name + '.pth'))
+    console.log('model saved')    
 
     
 def load_model(model_name, model, optimizer=None, scheduler=None):
@@ -23,4 +24,4 @@ def load_model(model_name, model, optimizer=None, scheduler=None):
         optimizer.load_state_dict(state['optimizer'])
     if scheduler is not None:
         scheduler.load_state_dict(state['scheduler'])
-    print('model loaded')
+    console.log('model loaded')

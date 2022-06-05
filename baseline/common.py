@@ -1,4 +1,6 @@
 import os
+import json
+from PIL import Image
 
 import torch
 from torch.nn import CTCLoss
@@ -7,7 +9,7 @@ from torch.autograd import Variable
 from baseline.data import loadData
 from baseline.evaluation import evaluation_metrics
 from baseline.save import save_model
-from utils.rich import console
+from utils.rich import console, new_progress
 
 
 def train(num_epochs, model, device, train_loader, val_loader, images, texts, lengths, converter, optimizer, lr_scheduler, prediction_dir, progress, save_desc='', start_epoch=0) :
@@ -124,3 +126,25 @@ def test(model, device, test_loader, images, texts, lengths, converter, predicti
     progress.remove_task(task_id)
     
     return image_path_list, pred_list
+
+
+def create_json(test_imgs, test_preds, file_path):
+    with new_progress() as progress:
+        task_id = progress.add_task('[yellow]Output .json', total=len(test_imgs))
+        
+        labels = []
+        for file_name, text in zip(test_imgs, test_preds):
+            img = Image.open(file_name)
+            new_label = {
+                'width': img.width,
+                'height': img.height,
+                'file_name': file_name.split('\\')[-1],
+                'text': text,
+            }
+            labels.append(new_label)
+            progress.advance(task_id)
+        
+        label_json = {'annotations': labels}
+        
+        with open(file_path, 'w', encoding='UTF-8') as f:
+            json.dump(label_json, f, indent=2, ensure_ascii=False)

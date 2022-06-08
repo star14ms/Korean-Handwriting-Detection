@@ -86,20 +86,24 @@ class KoSyllableDataset(Dataset):
         if not os.path.exists(self.img_dir):
             self.prepare()
 
-        self.data = sorted(glob(self.img_dir + '/*.jpeg'))
+        # self.data = sorted(glob(self.img_dir + '/*.jpeg'))
+        self.data = tuple(os.listdir(self.img_dir))
         self.len = len(self.data)
 
-        annotations = read_json(f'{data_dir}label.json')['annotations']
-        annotations = sorted(annotations, key=lambda x: x['file_name'])
-        self.labels = [anno['label'] for anno in annotations]
+        # annotations = read_json(f'{data_dir}label.json')['annotations']
+        # annotations = sorted(annotations, key=lambda x: x['file_name'])
+        # self.labels = [anno['label'] for anno in annotations]
+        
+        self.labels = read_json(f'{data_dir}label.json')['annotations']
 
     def __len__(self):
         return self.len
 
     def __getitem__(self, idx):
         file_name = self.data[idx]
-        image = Image.open(file_name).convert('L')
-        label = self.labels[idx]
+        image = Image.open(self.img_dir + file_name).convert('L')
+        # label = self.labels[idx]
+        label = [label['label'] for label in self.labels if label["file_name"] == file_name][0] if self.labels is not None else ''
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

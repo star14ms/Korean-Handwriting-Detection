@@ -104,7 +104,7 @@ def predict(x, t, model, device, plot=False, plot_when_wrong=True, description=N
         return char_y
 
 
-def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=True):
+def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=True, plot_feature_map=False):
     model.eval()
     with torch.no_grad():
         idx = -1
@@ -118,7 +118,7 @@ def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=Tru
                     idx += 1
                     
             _, correct = predict(*test_set[idx], model, device, plot=True, plot_when_wrong=plot_when_wrong, description=idx)
-            if not correct or not plot_when_wrong:
+            if (not correct or not plot_when_wrong) and plot_feature_map:
                 model.show_feature_maps(test_set[idx][0], device, description=idx)
 
 
@@ -177,7 +177,7 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(args.load_model))
     console.log('모델 로드 완료!')
 
-    test_sample(test_set, model, device, random_sample=False, plot_when_wrong=False)
+    test_sample(test_set, model, device, random_sample=False, plot_when_wrong=False, plot_feature_map=False)
 
     # loss_fn = nn.CrossEntropyLoss()
     # with new_progress() as progress:

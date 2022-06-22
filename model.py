@@ -5,10 +5,10 @@ from save_feature_module import SaveFeatureModule
 from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
 
 
-def Conv2d_Norm_ReLU(in_chans, out_chans, kernel_size=3, stride=1, padding=1):
+def Conv2d_Norm_ReLU(in_channels, out_channels, kernel_size=3, stride=1, padding=1):
     return nn.Sequential(
-        nn.Conv2d(in_chans, out_chans, kernel_size, stride, padding),
-        nn.BatchNorm2d(out_chans),
+        nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding),
+        nn.BatchNorm2d(out_channels),
         nn.ReLU(),
     )
 
@@ -29,8 +29,8 @@ class KoCtoP(SaveFeatureModule):
     def __init__(self) -> None:
         super().__init__()
         c1, c2, c3 = 64, 128, 256
-        c2_f_size = 64//2//2
-        c3_f_size = 64//2//2//2
+        c2_f_size = 64 // (2**2)
+        c3_f_size = 64 // (2**3)
         in_features = (c2*c2_f_size*c2_f_size) + (c3*c3_f_size*c3_f_size)
         hiddens = 128
 
@@ -97,35 +97,28 @@ class KoCtoP(SaveFeatureModule):
 
 
 class KoCtoPLarge(nn.Module):
-    def __init__(self) -> None:
+    def __init__(
+        self, 
+        input_size=64, 
+        layer_in_channels=(1, 64, 128, 256), 
+        layer_out_channels=(64, 128, 256, 512),
+        hiddens = 256,
+    ) -> None:
         super().__init__()
-        c1, c2, c3, c4 = 64, 128, 256, 512
-        c3_feature_size = 64 // (2**3)
-        c4_feature_size = 64 // (2**4)
-        in_features = (c3*(c3_feature_size**2)) * (c4*(c4_feature_size**2))
-        hiddens = 256
+        assert len(layer_in_channels) == len(layer_out_channels)
+        last_conv_feature_size = input_size // (2**len(layer_in_channels))
+        in_features = (layer_out_channels[-1]*(last_conv_feature_size**2))
+        self.conv_pool_layers = nn.ModuleList()
 
-        self.conv1_pool = nn.Sequential(
-            Conv2d_Norm_ReLU(1, c1), 
-            Conv2d_Norm_ReLU(c1, c1), 
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        self.conv2_pool = nn.Sequential(
-            Conv2d_Norm_ReLU(c1, c2), 
-            Conv2d_Norm_ReLU(c2, c2), 
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        self.conv3_pool = nn.Sequential(
-            Conv2d_Norm_ReLU(c2, c3), 
-            Conv2d_Norm_ReLU(c3, c3), 
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        self.conv4_pool = nn.Sequential(
-            Conv2d_Norm_ReLU(c3, c4), 
-            Conv2d_Norm_ReLU(c4, c4), 
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        
+        for in_channels, out_channels in zip(layer_in_channels, layer_out_channels):
+            self.conv_pool_layers.append(
+                nn.Sequential(
+                    Conv2d_Norm_ReLU(in_channels, out_channels), 
+                    Conv2d_Norm_ReLU(out_channels, out_channels), 
+                    nn.MaxPool2d(kernel_size=2, stride=2),
+                )
+            )
+
         self.flatten = nn.Sequential(
             nn.Flatten(),
             nn.Dropout(),
@@ -151,14 +144,9 @@ class KoCtoPLarge(nn.Module):
         )
 
     def forward(self, x):
-        x = self.conv1_pool(x) # [N, 64, 32, 32]
-        x = self.conv2_pool(x) # [N, 128, 16, 16]
-        x3 = self.conv3_pool(x) # [N, 256, 8, 8]
-        x4 = self.conv4_pool(x3) # [N, 512, 4, 4]
-        x3 = self.flatten(x3) # [N, 16384]
-        x4 = self.flatten(x4) # [N, 8192]
-        x = torch.cat([x3, x4], dim=1) # [N, 24576]
-        del x3, x4
+        for conv_pool in self.conv_pool_layers:
+            x = conv_pool(x) # [N, 64, 32, 32], [N, 128, 16, 16], [N, 256, 8, 8], [N, 512, 4, 4]
+        x = self.flatten(x) # [N, 8192]
 
         y1 = self.liner_initial(x)
         y2 = self.liner_medial(x)

@@ -25,6 +25,9 @@ parser.add_argument('--epoch', type=int, dest='epochs',
 parser.add_argument('--batch-size', type=int, dest='batch_size',
                         default=50,
                         help='묶어서 학습할 숫자 (batch size)')
+parser.add_argument('--print-every', type=int, dest='print_every',
+                        default=20,
+                        help='학습 로그 출력하는 간격 (단위: batch))')
 args = parser.parse_args()
 
 
@@ -57,7 +60,7 @@ if file_name:
 console.log('모델 {} 완료!'.format('로드' if file_name else '준비'))
 
 
-def train(model, train_loader, loss_fn, optimizer, progress):
+def train(model, train_loader, loss_fn, optimizer, print_every, progress):
     model.train()
     device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
     size = len(train_loader.dataset)
@@ -66,6 +69,7 @@ def train(model, train_loader, loss_fn, optimizer, progress):
     task_id = progress.add_task(f'iter {batch_size}/{size}', total=size)
 
     train_loss, correct, current = 0, 0, 0
+    correct_per_print, current_per_print = 0, 0
 
     for iter, (x, t) in enumerate(train_loader):
         x = x.to(device)
@@ -84,18 +88,25 @@ def train(model, train_loader, loss_fn, optimizer, progress):
         mask_i = (yi.argmax(1) == ti)
         mask_m = (ym.argmax(1) == tm)
         mask_f = (yf.argmax(1) == tf)
-        correct += (ones * mask_i * mask_m * mask_f).sum().item()
-
+        correct_batch = (ones * mask_i * mask_m * mask_f).sum().item()
+        
+        correct += correct_batch
+        correct_per_print += correct_batch
         current += len(x)
+        current_per_print += len(x)
+
         progress.update(task_id, description=f'iter {current}/{size}', advance=len(x))
         
-        if iter % 10 == 0:
-            progress.log(f"loss: {loss.item()/len(x):>6f}")
+        if iter % print_every == 0:
+            avg_acc = correct_per_print / current_per_print * 100
+            progress.log(f"loss: {loss.item()/len(x):>6f} | acc: {avg_acc:>0.1f}%")
+            correct_per_print = 0
+            current_per_print = 0
 
         if current % 10000 == 0:
             avg_loss = train_loss / current
             avg_acc = correct / current * 100
-            file_name = model.__class__.__name__ + f'-acc_{(avg_acc):>0.3f}%-loss_{avg_loss:>6f}-{start+current}.pth'
+            file_name = model.__class__.__name__ + f'-acc_{avg_acc:>0.2f}%-loss_{avg_loss:>6f}-{start+current}.pth'
             torch.save(model.state_dict(), save_dir+file_name)
         
             progress.log(f'Saved PyTorch Model State to {save_dir+file_name}')
@@ -112,7 +123,7 @@ with new_progress() as progress:
     task_id = progress.add_task(f'epoch 1/{epochs}', total=epochs)
 
     for epoch in range(1, epochs+1):
-        train_loss, train_acc = train(model, train_loader, loss_fn, optimizer, progress)
+        train_loss, train_acc = train(model, train_loader, loss_fn, optimizer, args.print_every, progress)
         test_loss, test_acc = test(model, train_loader, loss_fn, progress)
         
         progress.update(task_id, description=f'epoch {epoch}/{epochs}', advance=1)

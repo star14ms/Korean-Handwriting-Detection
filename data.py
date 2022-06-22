@@ -7,7 +7,7 @@ from glob import glob
 from PIL import Image
 from PIL.ImageOps import invert
 
-from utils.utils import get_file, unzip
+from utils.utils import get_file, unzip, Resize
 import tools as hangul_tools
 
 
@@ -77,7 +77,7 @@ class KoSyllableDataset(Dataset):
     to_tensor = ToTensor()
     to_pil = ToPILImage()
 
-    def __init__(self, data_dir='./data-syllable/', transform=Compose([ToTensor()]), target_transform=None, train=True):
+    def __init__(self, data_dir='./data-syllable/', transform=Compose([Resize()]), target_transform=None, train=True):
         self.data_dir = data_dir
         self.img_dir = f'{data_dir}train/' if train else f'{data_dir}test/'
         self.transform = transform
@@ -128,12 +128,12 @@ class KoSyllableDataset(Dataset):
 if __name__ == '__main__':
     from rich import print
 
-    sentence_set = KoHWSentenceDataset()
-    sentence_set2 = KoHWSentenceDataset(train=False)
-    # train_set = KoSyllableDataset() # syllable: 음절
-    # test_set = KoSyllableDataset(train=False)
+    train_set = KoSyllableDataset(transform=Resize()) # syllable: 음절
+    test_set = KoSyllableDataset(train=False)
+    # sentence_set = KoHWSentenceDataset()
+    # sentence_set2 = KoHWSentenceDataset(train=False)
 
-    for x, t in sentence_set:
-        sentence_set.to_pil(x).show()
+    for x, t in train_set:
+        train_set.to_pil(x).show()
         print(t)
         input()

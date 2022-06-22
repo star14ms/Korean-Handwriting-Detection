@@ -30,7 +30,7 @@ parser.add_argument('--print-every', type=int, dest='print_every',
                         default=20,
                         help='학습 로그 출력하는 간격 (단위: batch))')
 parser.add_argument('--lr', type=float, dest='lr',
-                        default=1e-4,
+                        default=1e-3,
                         help='학습률 (Learning Rate)')
 args = parser.parse_args()
 

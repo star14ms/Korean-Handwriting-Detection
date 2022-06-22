@@ -127,13 +127,15 @@ class KoSyllableDataset(Dataset):
 
 if __name__ == '__main__':
     from rich import print
+    import random
 
-    train_set = KoSyllableDataset(transform=Resize()) # syllable: 음절
-    test_set = KoSyllableDataset(train=False)
-    # sentence_set = KoHWSentenceDataset()
-    # sentence_set2 = KoHWSentenceDataset(train=False)
-
-    for x, t in train_set:
-        train_set.to_pil(x).show()
+    dataset = KoSyllableDataset(transform=Resize()) # syllable: 음절
+    # dataset = KoSyllableDataset(train=False)
+    # dataset = KoHWSentenceDataset()
+    # dataset = KoHWSentenceDataset(train=False)
+    
+    while True:
+        x, t = random.choice(dataset)
+        dataset.to_pil(x).show()
         print(t)
         input()

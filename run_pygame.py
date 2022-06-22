@@ -1,0 +1,94 @@
+import sys
+import pygame
+import torch
+import argparse
+import time
+import numpy as np
+
+from utils.plot import set_font
+from model import KoCtoP
+from utils.rich import console
+from utils.utils import Resize
+from test import predict
+
+
+resize = Resize()
+pygame.init()
+pygame.display.set_caption("한글 손글씨 감지!")
+myfont = pygame.font.Font('etc/주아체.ttf', 120)
+
+
+def main(args):
+    model = load_model(args)
+    mousepos = []
+    detect_interval_sec = 2
+    is_drawing = False
+    result = None
+
+    pygame.init()
+    screen = pygame.display.set_mode((512, 512))
+
+    start = time.time()
+    while True:
+        screen.fill((0, 0, 0))
+    
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                is_drawing = True
+            elif event.type == pygame.MOUSEBUTTONUP:
+                is_drawing = False
+            elif is_drawing and event.type == pygame.MOUSEMOTION:
+                mousepos.append(event.pos)
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
+                mousepos.clear()
+
+
+        for pos in mousepos:
+            pygame.draw.circle(screen, (255, 255, 255), pos, 5)
+        
+        if detect_interval_sec <= time.time() - start:
+            start = time.time()
+            result = detect(model, screen)
+            console.print(result)
+
+        if result is not None:
+            text = myfont.render(result, True, (255, 255, 255))
+            screen.blit(text, (512-120, 0))
+
+        pygame.display.update()
+        
+
+def load_model(args):
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    console.log("Using [green]{}[/green] device\n".format(device))
+    model = KoCtoP().to(device)
+    model.load_state_dict(torch.load(args.load_model))
+    console.log('모델 로드 완료!')
+
+    return model
+
+
+def detect(model, screen):
+    arr = pygame.surfarray.pixels2d(screen).T
+    arr = np.where(arr!=0, 1.0, 0.0)
+    arr = resize(arr.astype(np.float32))
+    pred = predict(arr, t=None, model=model)
+
+    return pred
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--load-model', type=str, dest='load_model',
+                            default='save/KoCtoP-acc_14.285%-loss_0.088537-420000.pth',
+                            help='불러올 모델 경로 (model weight path to load)')
+    args = parser.parse_args()
+
+    set_font(family='BM JUA_TTF')
+
+    main(args)
+    

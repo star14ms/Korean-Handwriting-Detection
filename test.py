@@ -70,8 +70,9 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
     return test_loss, correct * 100
 
 
-def predict(x, t, model, device, plot=False, plot_when_wrong=True, description=None, verbose=False):
+def predict(x, t, model, plot=False, plot_when_wrong=True, description=None, verbose=False):
     model.eval()
+    device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
     x = x.unsqueeze(0).to(device)
     
     yi, ym, yf = model(x)
@@ -117,12 +118,12 @@ def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=Tru
                 except ValueError:
                     idx += 1
                     
-            _, correct = predict(*test_set[idx], model, device, plot=True, plot_when_wrong=plot_when_wrong, description=idx)
+            _, correct = predict(*test_set[idx], model, plot=True, plot_when_wrong=plot_when_wrong, description=idx)
             if (not correct or not plot_when_wrong) and plot_feature_map:
                 model.show_feature_maps(test_set[idx][0], device, description=idx)
 
 
-def predict_sentence(sentence_set, model, device):
+def predict_sentence(sentence_set, model):
     to_pil = sentence_set.to_pil
     to_tensor = sentence_set.to_tensor
     
@@ -137,7 +138,7 @@ def predict_sentence(sentence_set, model, device):
             x_piece = x[:,:,start_x:start_x+h]
             x_piece = to_pil(x_piece).resize((64, 64))
             x_piece = to_tensor(x_piece)
-            pred = predict(x_piece, t=None, model=model, device=device)
+            pred = predict(x_piece, t=None, model=model)
 
             if pred == before_pred:
                 same_pred_stack += 1

@@ -59,6 +59,7 @@ console.log('모델 {} 완료!'.format('로드' if file_name else '준비'))
 
 def train(model, train_loader, loss_fn, optimizer, progress):
     model.train()
+    device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
     size = len(train_loader.dataset)
     batch_size = train_loader.batch_size
 

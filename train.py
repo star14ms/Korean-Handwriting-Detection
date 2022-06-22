@@ -4,6 +4,7 @@ from torch.utils.data import DataLoader
 import os
 import argparse
 import pandas as pd
+import numpy as np
 from rich.traceback import install
 install()
 
@@ -28,6 +29,9 @@ parser.add_argument('--batch-size', type=int, dest='batch_size',
 parser.add_argument('--print-every', type=int, dest='print_every',
                         default=20,
                         help='학습 로그 출력하는 간격 (단위: batch))')
+parser.add_argument('--lr', type=float, dest='lr',
+                        default=1e-4,
+                        help='학습률 (Learning Rate)')
 args = parser.parse_args()
 
 
@@ -52,11 +56,13 @@ makedirs(save_dir)
 file_name = args.load_model
 start = int(file_name.split('-')[-1].replace('.pth','')) if file_name else 0
 model = KoCtoPLarge().to(device)
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
 if file_name:
     model.load_state_dict(torch.load(save_dir+file_name))
 console.log('모델 {} 완료!'.format('로드' if file_name else '준비'))
+
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+console.log('lr:', np.format_float_scientific(args.lr, exp_digits=1))
 
 
 class Trainer:

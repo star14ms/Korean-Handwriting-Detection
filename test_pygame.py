@@ -5,11 +5,11 @@ import argparse
 import time
 import numpy as np
 
-from utils.plot import set_font
 from kohwctop.model import KoCtoPSmall, KoCtoP
+from kohwctop.test import predict
+from utils.plot import set_font
 from utils.rich import console
 from utils.utils import Resize
-from test import predict
 
 
 resize = Resize()

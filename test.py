@@ -14,6 +14,7 @@ from utils.plot import show_img_and_scores, set_font
 from tools.constant import label_to_syllable
 
 
+@torch.no_grad()
 def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
     model.eval()
     batch_size = test_loader.batch_size
@@ -22,45 +23,44 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
 
     test_loss, correct, current = 0, 0, 0
     
-    with torch.no_grad():
-        for iter, (x, t) in enumerate(test_loader):
-            x = x.to(device)
-            yi, ym, yf = model(x)
-            yi, ym, yf = yi.cpu(), ym.cpu(), yf.cpu()
-            pi, pm, pf = yi.argmax(1), ym.argmax(1), yf.argmax(1)
-            
-            ti, tm, tf = t.values()
-            loss = loss_fn(yi, ti) + loss_fn(ym, tm) + loss_fn(yf, tf)
-            test_loss += loss.item()
-            
-            ones = torch.ones([len(x)])
-            mask_i = (pi == ti)
-            mask_m = (pm == tm)
-            mask_f = (pf == tf)
-            correct_info = ones * mask_i * mask_m * mask_f
-            n_correct = correct_info.sum().item()
-            correct += n_correct
+    for iter, (x, t) in enumerate(test_loader):
+        x = x.to(device)
+        yi, ym, yf = model(x)
+        yi, ym, yf = yi.cpu(), ym.cpu(), yf.cpu()
+        pi, pm, pf = yi.argmax(1), ym.argmax(1), yf.argmax(1)
+        
+        ti, tm, tf = t.values()
+        loss = loss_fn(yi, ti) + loss_fn(ym, tm) + loss_fn(yf, tf)
+        test_loss += loss.item()
+        
+        ones = torch.ones([len(x)])
+        mask_i = (pi == ti)
+        mask_m = (pm == tm)
+        mask_f = (pf == tf)
+        correct_info = ones * mask_i * mask_m * mask_f
+        n_correct = correct_info.sum().item()
+        correct += n_correct
 
-            if show_wrong_info and n_correct != len(x):
-                for idx in torch.where(correct_info == False)[0]:
-                    char_y = label_to_syllable(
-                        pi[idx].item(), 
-                        pm[idx].item(), 
-                        pf[idx].item()
-                    )
-                    char_t = label_to_syllable(
-                        ti[idx].item(), 
-                        tm[idx].item(), 
-                        tf[idx].item()
-                    )
-                    text = '예측: {} 정답: {}'.format(char_y, char_t)
-                    show_img_and_scores(x[idx].cpu(), yi[idx], ym[idx], yf[idx], title=text)
+        if show_wrong_info and n_correct != len(x):
+            for idx in torch.where(correct_info == False)[0]:
+                char_y = label_to_syllable(
+                    pi[idx].item(), 
+                    pm[idx].item(), 
+                    pf[idx].item()
+                )
+                char_t = label_to_syllable(
+                    ti[idx].item(), 
+                    tm[idx].item(), 
+                    tf[idx].item()
+                )
+                text = '예측: {} 정답: {}'.format(char_y, char_t)
+                show_img_and_scores(x[idx].cpu(), yi[idx], ym[idx], yf[idx], title=text)
 
-            current += len(x)
-            progress.update(task_id, description=f'iter {current}/{size}', advance=len(x))
+        current += len(x)
+        progress.update(task_id, description=f'iter {current}/{size}', advance=len(x))
 
-            if iter % 10 == 0:
-                progress.log(f"loss: {test_loss/current:>6f} acc: {correct/current*100:>0.3f}%")
+        if iter % 10 == 0:
+            progress.log(f"loss: {test_loss/current:>6f} acc: {correct/current*100:>0.3f}%")
 
     test_loss /= current
     correct /= current
@@ -69,7 +69,7 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
 
     return test_loss, correct * 100
 
-
+@torch.no_grad()
 def predict(x, t, model, plot=False, plot_when_wrong=True, description=None, verbose=False):
     model.eval()
     device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
@@ -104,25 +104,24 @@ def predict(x, t, model, plot=False, plot_when_wrong=True, description=None, ver
     else:
         return char_y
 
-
+@torch.no_grad()
 def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=True, plot_feature_map=False):
     model.eval()
-    with torch.no_grad():
-        idx = -1
-        while True:
-            if random_sample:
-                idx = random.randint(0, len(test_set)-1) 
-            else:
-                try: 
-                    idx = int(input('data idx: '))
-                except ValueError:
-                    idx += 1
-                    
-            _, correct = predict(*test_set[idx], model, plot=True, plot_when_wrong=plot_when_wrong, description=idx)
-            if (not correct or not plot_when_wrong) and plot_feature_map:
-                model.show_feature_maps(test_set[idx][0], device, description=idx)
+    idx = -1
+    while True:
+        if random_sample:
+            idx = random.randint(0, len(test_set)-1) 
+        else:
+            try: 
+                idx = int(input('data idx: '))
+            except ValueError:
+                idx += 1
+                
+        _, correct = predict(*test_set[idx], model, plot=True, plot_when_wrong=plot_when_wrong, description=idx)
+        if (not correct or not plot_when_wrong) and plot_feature_map:
+            model.show_feature_maps(test_set[idx][0], device, description=idx)
 
-
+@torch.no_grad()
 def predict_sentence(sentence_set, model):
     to_pil = sentence_set.to_pil
     to_tensor = sentence_set.to_tensor

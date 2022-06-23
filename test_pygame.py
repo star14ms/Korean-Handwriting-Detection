@@ -23,6 +23,7 @@ def main(args):
     mousepos = []
     detect_interval_sec = 2
     is_drawing = False
+    show_graph = False
     result = None
 
     pygame.init()
@@ -45,15 +46,17 @@ def main(args):
                 mousepos.append(event.pos)
             elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
                 mousepos.clear()
-
+            elif event.type == pygame.KEYDOWN and event.key == pygame.K_v:
+                show_graph = True
 
         for pos in mousepos:
             pygame.draw.circle(screen, (255, 255, 255), pos, 5)
         
         if detect_interval_sec <= time.time() - start:
             start = time.time()
-            result = detect(model, screen)
+            result = detect(model, screen, show_graph)
             console.print(result)
+            show_graph = False
 
         if result is not None:
             text = myfont.render(result, True, (255, 255, 255))
@@ -72,11 +75,11 @@ def load_model(args):
     return model
 
 
-def detect(model, screen):
+def detect(model, screen, show_graph):
     arr = pygame.surfarray.pixels2d(screen).T
     arr = np.where(arr!=0, 1.0, 0.0)
     arr = resize(arr.astype(np.float32))
-    pred = predict(arr, t=None, model=model)
+    pred = predict(arr, t=None, model=model, plot=show_graph, plot_when_wrong=False)
 
     return pred
 

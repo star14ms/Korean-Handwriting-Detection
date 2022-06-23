@@ -16,7 +16,7 @@ def Liner_Norm_ReLU(in_features, out_features):
     return nn.Sequential(
         nn.Linear(in_features, out_features),
         nn.BatchNorm1d(out_features),
-        nn.Dropout(),
+        nn.ReLU(),
     )
 
 

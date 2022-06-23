@@ -14,7 +14,7 @@ def Conv2d_Norm(in_channels, out_channels, kernel_size=3, stride=1, padding=1, a
         'gelu': nn.GELU(),
     }
     return nn.Sequential(
-        nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding),
+        nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding, bias=False),
         nn.BatchNorm2d(out_channels),
         activations[activation],
     )

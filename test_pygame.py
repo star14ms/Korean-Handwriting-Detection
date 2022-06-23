@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 from utils.plot import set_font
-from model import KoCtoP
+from kohwctop.model import KoCtoP
 from utils.rich import console
 from utils.utils import Resize
 from test import predict

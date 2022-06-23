@@ -1,6 +1,6 @@
 from data import KoHWSentenceDataset
 from utils.plot import set_font
-from preprocessing.functions import (
+from kohwctop.preprocess.functions import (
     get_data_from_train_set,
     save_n_piece,
     get_corrct_rate_n_piece,
@@ -8,7 +8,7 @@ from preprocessing.functions import (
     merge_pieces,
     crop_blank,
 )
-from data_insight import (
+from insight.data_insight import (
     plot_sentence_cutting_info,
     plot_brightness_gradient,
 )

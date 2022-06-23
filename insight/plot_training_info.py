@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 from matplotlib._color_data import TABLEAU_COLORS
 import numpy as np
 
+if '__file__' in globals():
+    import os, sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
     
 from utils.utils import read_csv
 

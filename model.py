@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 
-from save_feature_module import SaveFeatureModule
+from kohwctop.save_feature_module import SaveFeatureModule
 from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
 
 

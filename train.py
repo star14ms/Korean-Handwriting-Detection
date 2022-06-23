@@ -10,7 +10,7 @@ from rich.traceback import install
 install()
 
 from data import KoSyllableDataset
-from model import KoCtoP, KoCtoPLarge
+from kohwctop.model import KoCtoP, KoCtoPLarge
 from utils.plot import set_font
 from utils.rich import new_progress, console
 from utils.utils import read_csv

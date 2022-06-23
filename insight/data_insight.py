@@ -1,13 +1,16 @@
-from data import KoHWSentenceDataset
-from utils.plot import set_font
-
+import os
 import torch
 import seaborn as sns
 import matplotlib.pyplot as plt 
 import numpy as np
-
 from rich.progress import track
-import os
+
+if '__file__' in globals():
+    import os, sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from data import KoHWSentenceDataset
+from utils.plot import set_font
 
 
 def get_spacing_lengths(x, min_brightness=3, min_space=20):
@@ -110,7 +113,7 @@ if __name__ == '__main__':
     os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
     
     train_set = KoHWSentenceDataset()
-    specimen_len = len(train_set)
+    specimen_len = len(train_set)//10
     binrange = (20, 120)
 
     lens_space_of_dataset = ()

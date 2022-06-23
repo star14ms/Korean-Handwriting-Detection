@@ -1,11 +1,15 @@
 import torch
 from torchviz import make_dot
 
-from model import KoCtoP
+if '__file__' in globals():
+    import os, sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
+from kohwctop.model import KoCtoPLarge
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = KoCtoP().to(device)
+model = KoCtoPLarge().to(device)
 model.eval()
 
 kwargs = {

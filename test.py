@@ -1,6 +1,6 @@
 from data import KoSyllableDataset
 from data import KoHWSentenceDataset
-from model import KoCtoP
+from kohwctop.model import KoCtoP
 
 import torch
 from torch import nn

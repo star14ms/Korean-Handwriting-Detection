@@ -167,15 +167,11 @@ def get_idxs_to_crop(x):
 
 def read_csv(csv_path, return_dict=False):
     df = pd.read_csv(csv_path)
+    if return_dict:
+        return df.to_dict('list')
 
     col_list = []
     for col in df.keys():
         col_list.append(df[col].tolist())
     
-    if return_dict:
-        df_dict = {}
-        for key, col in zip(df.keys(), col_list):
-            df_dict[key] = col
-        return df_dict
-    else:
-        return (*col_list,)
+    return (*col_list,)

@@ -12,12 +12,6 @@ from utils.rich import console
 from utils.utils import Resize
 
 
-resize = Resize()
-pygame.init()
-pygame.display.set_caption("한글 손글씨 감지!")
-myfont = pygame.font.Font('etc/주아체.ttf', 120)
-
-
 def main(args):
     model = load_model(args)
     mousepos = []
@@ -91,7 +85,13 @@ if __name__ == '__main__':
                             help='불러올 모델 경로 (model weight path to load)')
     args = parser.parse_args()
 
-    set_font(family='BM JUA_TTF')
+    resize = Resize()
+    pygame.init()
+    pygame.display.set_caption("한글 손글씨 감지!")
+
+    font_path = 'NanumSquareRoundEB.ttf'
+    myfont = pygame.font.Font(font_path, 120)
+    set_font(font_path)
 
     main(args)
     

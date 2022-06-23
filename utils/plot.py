@@ -4,7 +4,9 @@ import numpy as np
 
 
 def set_font(font_path='', family=''):
-    '''
+    ''' 
+        ``import matplotlib as mpl``
+        
         ``print(mpl.matplotlib_fname())`` 이 경로에 폰트 추가 필요
         ``print(mpl.get_cachedir())`` 캐시 지우는 경로
     '''
@@ -141,12 +143,12 @@ def show_img_and_scores(x, *ys, ys_kwargs=ys_plot_kwargs, title='', dark_mode=Tr
             color[sorted_idx[y_idx]] = color_name
 
         x_ = np.arange(len(y))
-        ax = fig.add_subplot(len_ys, 2, (ys_idx+1)*2, xticks=x_, yticks=np.round(sorted(y)[-3:], 1), ylabel='점수', **y_kwargs)
+        ax = fig.add_subplot(len_ys, 2, (ys_idx+1)*2, xticks=x_, ylabel='점수', **y_kwargs)
+        plt.yticks(np.round(sorted(y)[-3:], 1), fontname='sans-serif')
         ax.bar(x_, y, color=color)
-         
+
     plt.get_current_fig_manager().window.showMaximized()
-    plt.tight_layout()
+    plt.pause(0.01)
+    plt.subplots_adjust(left=0.0014, right=0.986, bottom=0.080, top=0.936, wspace=0.084, hspace=0.344)
     plt.pause(0.01)
     plt.show()
-
-

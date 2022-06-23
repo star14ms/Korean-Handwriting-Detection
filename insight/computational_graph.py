@@ -5,11 +5,11 @@ if '__file__' in globals():
     import os, sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from kohwctop.model import KoCtoPLarge
+from kohwctop.model import KoCtoP
 
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
-model = KoCtoPLarge().to(device)
+model = KoCtoP().to(device)
 model.eval()
 
 kwargs = {

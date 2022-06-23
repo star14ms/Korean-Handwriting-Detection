@@ -25,7 +25,7 @@ len_medial = len(CHAR_MEDIALS_PLUS)
 len_final = len(CHAR_FINALS_PLUS)
 
 
-class KoCtoP(SaveFeatureModule):
+class KoCtoPSmall(SaveFeatureModule):
     def __init__(
         self, 
         input_size=64, 
@@ -96,7 +96,7 @@ class KoCtoP(SaveFeatureModule):
         return y1, y2, y3
 
 
-class KoCtoPLarge(nn.Module):
+class KoCtoP(nn.Module):
     def __init__(
         self, 
         input_size=64, 

@@ -10,7 +10,7 @@ from rich.traceback import install
 install()
 
 from data import KoSyllableDataset
-from kohwctop.model import KoCtoP, KoCtoPLarge
+from kohwctop.model import KoCtoPSmall, KoCtoP
 from utils.plot import set_font
 from utils.rich import new_progress, console
 from utils.utils import read_csv
@@ -162,7 +162,7 @@ save_datetime = file_path.split('/')[0] if file_path else \
 save_dir = f'save/{save_datetime}/'
 os.makedirs(save_dir, exist_ok=True)
 
-model = KoCtoPLarge().to(device)
+model = KoCtoP().to(device)
 if file_path:
     model.load_state_dict(torch.load(save_dir+file_path.split('/')[1]))
 console.log('모델 {} 완료!'.format('로드' if file_path else '준비'))

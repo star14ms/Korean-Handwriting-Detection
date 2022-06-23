@@ -6,7 +6,7 @@ import time
 import numpy as np
 
 from utils.plot import set_font
-from kohwctop.model import KoCtoP
+from kohwctop.model import KoCtoPSmall, KoCtoP
 from utils.rich import console
 from utils.utils import Resize
 from test import predict
@@ -84,7 +84,7 @@ def detect(model, screen):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load-model', type=str, dest='load_model',
-                            default='save/KoCtoP-acc_14.285%-loss_0.088537-420000.pth',
+                            default='save/220623_101400/model.pt',
                             help='불러올 모델 경로 (model weight path to load)')
     args = parser.parse_args()
 

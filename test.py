@@ -156,7 +156,7 @@ def predict_sentence(sentence_set, model):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--load-model', type=str, dest='load_model',
-                            default='save/KoCtoP-acc_14.285%-loss_0.088537-420000.pth',
+                            default='save/220623_101400/model.pt',
                             help='불러올 모델 경로 (model weight path to load)')
     parser.add_argument('--batch-size', type=int, dest='batch_size',
                             default=50,

@@ -5,18 +5,33 @@ from kohwctop.save_feature_module import SaveFeatureModule
 from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
 
 
-def Conv2d_Norm_ReLU(in_channels, out_channels, kernel_size=3, stride=1, padding=1):
+def Conv2d_Norm(in_channels, out_channels, kernel_size=3, stride=1, padding=1, activation='relu'):
+    activations = {
+        'hardtanh': nn.Hardtanh(0, 20, inplace=True),
+        'relu': nn.ReLU(inplace=True),
+        'elu': nn.ELU(inplace=True),
+        'leaky_relu': nn.LeakyReLU(inplace=True),
+        'gelu': nn.GELU(),
+    }
     return nn.Sequential(
         nn.Conv2d(in_channels, out_channels, kernel_size, stride, padding),
         nn.BatchNorm2d(out_channels),
-        nn.ReLU(),
+        activations[activation],
     )
 
-def Liner_Norm_ReLU(in_features, out_features):
+
+def Linear_Norm(in_features, out_features, activation='relu'):
+    activations = {
+        'hardtanh': nn.Hardtanh(0, 20, inplace=True),
+        'relu': nn.ReLU(inplace=True),
+        'elu': nn.ELU(inplace=True),
+        'leaky_relu': nn.LeakyReLU(inplace=True),
+        'gelu': nn.GELU(),
+    }
     return nn.Sequential(
         nn.Linear(in_features, out_features),
         nn.BatchNorm1d(out_features),
-        nn.ReLU(),
+        activations[activation],
     )
 
 
@@ -43,8 +58,8 @@ class KoCtoPSmall(SaveFeatureModule):
         for in_channels, out_channels in zip(layer_in_channels, layer_out_channels):
             self.conv_pool_layers.append(
                 nn.Sequential(
-                    Conv2d_Norm_ReLU(in_channels, out_channels), 
-                    Conv2d_Norm_ReLU(out_channels, out_channels), 
+                    Conv2d_Norm(in_channels, out_channels), 
+                    Conv2d_Norm(out_channels, out_channels), 
                     nn.MaxPool2d(kernel_size=2, stride=2),
                 )
             )
@@ -55,19 +70,19 @@ class KoCtoPSmall(SaveFeatureModule):
         )
         
         self.liner_initial = nn.Sequential(
-            Liner_Norm_ReLU(in_features, hiddens),
+            Linear_Norm(in_features, hiddens),
             nn.Dropout(),
             nn.Linear(hiddens, len_initial),
             nn.Dropout(),
         )
         self.liner_medial = nn.Sequential(
-            Liner_Norm_ReLU(in_features, hiddens),
+            Linear_Norm(in_features, hiddens),
             nn.Dropout(),
             nn.Linear(hiddens, len_medial),
             nn.Dropout(),
         )
         self.liner_final = nn.Sequential(
-            Liner_Norm_ReLU(in_features, hiddens),
+            Linear_Norm(in_features, hiddens),
             nn.Dropout(),
             nn.Linear(hiddens, len_final),
             nn.Dropout(),
@@ -103,6 +118,8 @@ class KoCtoP(nn.Module):
         layer_in_channels=(1, 64, 128, 256), 
         layer_out_channels=(64, 128, 256, 512),
         hiddens=256,
+        conv_activation='relu',
+        ff_activation='relu',
     ) -> None:
         super().__init__()
         assert len(layer_in_channels) == len(layer_out_channels)
@@ -113,8 +130,8 @@ class KoCtoP(nn.Module):
         for in_channels, out_channels in zip(layer_in_channels, layer_out_channels):
             self.conv_pool_layers.append(
                 nn.Sequential(
-                    Conv2d_Norm_ReLU(in_channels, out_channels), 
-                    Conv2d_Norm_ReLU(out_channels, out_channels), 
+                    Conv2d_Norm(in_channels, out_channels, activation=conv_activation), 
+                    Conv2d_Norm(out_channels, out_channels, activation=conv_activation), 
                     nn.MaxPool2d(kernel_size=2, stride=2),
                 )
             )
@@ -125,19 +142,19 @@ class KoCtoP(nn.Module):
         )
         
         self.liner_initial = nn.Sequential(
-            Liner_Norm_ReLU(in_features, hiddens),
+            Linear_Norm(in_features, hiddens, ff_activation),
             nn.Dropout(),
             nn.Linear(hiddens, len_initial),
             nn.Dropout(),
         )
         self.liner_medial = nn.Sequential(
-            Liner_Norm_ReLU(in_features, hiddens),
+            Linear_Norm(in_features, hiddens, ff_activation),
             nn.Dropout(),
             nn.Linear(hiddens, len_medial),
             nn.Dropout(),
         )
         self.liner_final = nn.Sequential(
-            Liner_Norm_ReLU(in_features, hiddens),
+            Linear_Norm(in_features, hiddens, ff_activation),
             nn.Dropout(),
             nn.Linear(hiddens, len_final),
             nn.Dropout(),

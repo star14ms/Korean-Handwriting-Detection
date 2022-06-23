@@ -47,7 +47,7 @@ console.log("Using [green]{}[/green] device\n".format(device))
 class Trainer:
     MODEL_NAME = 'model.pt'
     TRAIN_STEP_RESULT_PATH = "train_step_result.csv"
-    train_step_result = {'n_learn': [], 'loss': [], 'acc': []}
+    train_step_result = {'n_learn': [], 'loss': [], 'acc': [], 'morp_acc': []}
 
     def __init__(self, train_loader, loss_fn, optimizer, device, print_every, save_dir):
         self.train_loader = train_loader
@@ -73,7 +73,7 @@ class Trainer:
             test_loss, test_acc = test(model, test_loader, self.loss_fn, self.progress)
             
             self.progress.update(task_id, description=f'epoch {epoch}/{epochs}', advance=1)
-            self.save_model(model, test_acc, test_loss)
+            self.save_model(model, test_loss, test_acc, -1)
         
         self.progress.stop()
 
@@ -83,9 +83,12 @@ class Trainer:
         size = len(self.train_loader.dataset)
 
         task_id = self.progress.add_task(f'iter {start_iter}/{size}', total=size)
-    
-        train_loss, correct, current = 0, 0, 0
-        train_loss_per_print, correct_per_print, current_per_print = 0, 0, 0
+        
+        train_loss, train_loss_local = 0, 0
+        correct, correct_local = 0, 0
+        m_correct, m_correct_local = 0, 0
+        current, current_local = 0, 0
+        m_current, m_current_local = 0, 0
     
         for iter, (x, t) in enumerate(self.train_loader):
             x = x.to(self.device)
@@ -99,49 +102,61 @@ class Trainer:
             self.optimizer.step()
     
             train_loss += loss.item()
-            train_loss_per_print += loss.item()
+            train_loss_local += loss.item()
             
             ones = torch.ones([len(x)])
             mask_i = (yi.argmax(1) == ti)
             mask_m = (ym.argmax(1) == tm)
             mask_f = (yf.argmax(1) == tf)
             correct_batch = (ones * mask_i * mask_m * mask_f).sum().item()
+            m_corrent_batch = mask_i.sum().item() + mask_m.sum().item() + mask_f.sum().item()
             
             correct += correct_batch
-            correct_per_print += correct_batch
+            correct_local += correct_batch
+            m_correct += m_corrent_batch
+            m_correct_local += m_corrent_batch
             current += len(x)
-            current_per_print += len(x)
+            current_local += len(x)
+            m_current += len(x) * 3
+            m_current_local += len(x) * 3
             self.n_learn += len(x)
     
-            self.progress.update(task_id, description=f'iter {(self.n_learn % size) + current}/{size}', advance=len(x))
+            self.progress.update(task_id, description=f'iter {self.n_learn % size}/{size}', advance=len(x))
             
             if (iter+1) % self.print_every == 0:
-                avg_loss = train_loss_per_print / current_per_print
-                avg_acc = correct_per_print / current_per_print * 100
-                self.progress.log(f"loss: {avg_loss:>6f} | acc: {avg_acc:>0.1f}%")
-                self.save_step_result(avg_loss, avg_acc)
-                train_loss_per_print = 0
-                correct_per_print = 0
-                current_per_print = 0
+                avg_loss = train_loss_local / current_local
+                avg_acc = correct_local / current_local * 100
+                avg_m_acc = m_correct_local / m_current_local * 100
+                self.progress.log(f"loss: {avg_loss:>6f} | acc: {avg_acc:>0.1f}% | morp acc: {avg_m_acc:>0.1f}%")
+                self.save_step_result(avg_loss, avg_acc, avg_m_acc)
+                train_loss_local = 0
+                correct_local = 0
+                m_correct_local = 0
+                current_local = 0
+                m_current_local = 0
                 
             if current % 10000 == 0:
                 avg_loss = train_loss / current
                 avg_acc = correct / current * 100
-                self.save_model(model, avg_acc, avg_loss)
+                avg_m_acc = m_correct / m_current * 100
+                self.save_model(model, avg_loss, avg_acc, avg_m_acc)
                 
         self.progress.remove_task(task_id)
         train_loss /= current
         correct /= current
         return train_loss, correct * 100
     
-    def save_model(self, model, acc, loss):
+    def save_model(self, model, loss, acc, m_acc):
+        os.makedirs(save_dir, exist_ok=True)
         torch.save(model.state_dict(), self.save_dir+Trainer.MODEL_NAME)
         self.progress.log(f'Saved PyTorch Model State to {self.save_dir+Trainer.MODEL_NAME}')
 
-    def save_step_result(self, loss: float, acc: float) -> None:
+    def save_step_result(self, loss: float, acc: float, m_acc: float) -> None:
+        os.makedirs(save_dir, exist_ok=True)
         Trainer.train_step_result["n_learn"].append(self.n_learn)
         Trainer.train_step_result["loss"].append(f'{loss:>6f}')
         Trainer.train_step_result["acc"].append(f'{acc:>0.1f}')
+        Trainer.train_step_result["morp_acc"].append(f'{m_acc:>0.1f}')
         
         file_name = Trainer.TRAIN_STEP_RESULT_PATH
         train_step_df = pd.DataFrame(Trainer.train_step_result)
@@ -157,10 +172,9 @@ console.log(f'데이터 로드 완료! (train set: {len(train_set)} / test set: 
 
 file_path = args.load_model
 save_datetime = file_path.split('/')[0] if file_path else \
-    time.strftime('%Y%m%d_%H%M%S', time.localtime())
+    time.strftime('%y%m%d_%H%M%S', time.localtime())
 
 save_dir = f'save/{save_datetime}/'
-os.makedirs(save_dir, exist_ok=True)
 
 model = KoCtoP().to(device)
 if file_path:

@@ -38,10 +38,14 @@ def main(args):
                 is_drawing = False
             elif is_drawing and event.type == pygame.MOUSEMOTION:
                 mousepos.append(event.pos)
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_SPACE:
-                mousepos.clear()
-            elif event.type == pygame.KEYDOWN and event.key == pygame.K_v:
-                show_graph = True
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    sys.exit()
+                elif event.key == pygame.K_SPACE:
+                    mousepos.clear()
+                elif event.key == pygame.K_v:
+                    show_graph = True
 
         for pos in mousepos:
             pygame.draw.circle(screen, (255, 255, 255), pos, 5)

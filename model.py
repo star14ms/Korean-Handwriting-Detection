@@ -26,29 +26,29 @@ len_final = len(CHAR_FINALS_PLUS)
 
 
 class KoCtoP(SaveFeatureModule):
-    def __init__(self) -> None:
+    def __init__(
+        self, 
+        input_size=64, 
+        layer_in_channels=(1, 64, 128), 
+        layer_out_channels=(64, 128, 256),
+        hiddens=128,
+    ) -> None:
         super().__init__()
-        c1, c2, c3 = 64, 128, 256
-        c2_f_size = 64 // (2**2)
-        c3_f_size = 64 // (2**3)
-        in_features = (c2*c2_f_size*c2_f_size) + (c3*c3_f_size*c3_f_size)
-        hiddens = 128
+        assert len(layer_in_channels) == len(layer_out_channels)
+        c2_f_size = input_size // (2**2)
+        c3_f_size = input_size // (2**3)
+        in_features = (layer_out_channels[-2]*c2_f_size*c2_f_size) + (layer_out_channels[-1]*c3_f_size*c3_f_size)
 
-        self.conv1_pool = nn.Sequential(
-            Conv2d_Norm_ReLU(1, c1), 
-            Conv2d_Norm_ReLU(c1, c1), 
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        self.conv2_pool = nn.Sequential(
-            Conv2d_Norm_ReLU(c1, c2), 
-            Conv2d_Norm_ReLU(c2, c2), 
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
-        self.conv3_pool = nn.Sequential(
-            Conv2d_Norm_ReLU(c2, c3), 
-            Conv2d_Norm_ReLU(c3, c3), 
-            nn.MaxPool2d(kernel_size=2, stride=2),
-        )
+        self.conv_pool_layers = nn.ModuleList()
+        for in_channels, out_channels in zip(layer_in_channels, layer_out_channels):
+            self.conv_pool_layers.append(
+                nn.Sequential(
+                    Conv2d_Norm_ReLU(in_channels, out_channels), 
+                    Conv2d_Norm_ReLU(out_channels, out_channels), 
+                    nn.MaxPool2d(kernel_size=2, stride=2),
+                )
+            )
+        
         self.flatten = nn.Sequential(
             nn.Flatten(),
             nn.Dropout(),
@@ -75,9 +75,9 @@ class KoCtoP(SaveFeatureModule):
 
     def forward(self, x):
         super().forward(x)
-        x = self.conv1_pool(x) # [N, 64, 32, 32]
-        x2 = self.conv2_pool(x) # [N, 128, 16, 16]
-        x3 = self.conv3_pool(x2) # [N, 256, 8, 8]
+        x = self.conv_pool_layers[0](x) # [N, 64, 32, 32]
+        x2 = self.conv_pool_layers[1](x) # [N, 128, 16, 16]
+        x3 = self.conv_pool_layers[2](x2) # [N, 256, 8, 8]
         
         if self.saving_features_available:
             self.save_feature_map('conv1', x)
@@ -102,14 +102,14 @@ class KoCtoPLarge(nn.Module):
         input_size=64, 
         layer_in_channels=(1, 64, 128, 256), 
         layer_out_channels=(64, 128, 256, 512),
-        hiddens = 256,
+        hiddens=256,
     ) -> None:
         super().__init__()
         assert len(layer_in_channels) == len(layer_out_channels)
         last_conv_feature_size = input_size // (2**len(layer_in_channels))
         in_features = (layer_out_channels[-1]*(last_conv_feature_size**2))
+        
         self.conv_pool_layers = nn.ModuleList()
-
         for in_channels, out_channels in zip(layer_in_channels, layer_out_channels):
             self.conv_pool_layers.append(
                 nn.Sequential(

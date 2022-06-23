@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torch.utils.data import DataLoader
 import os
+import time
 import argparse
 import pandas as pd
 import numpy as np
@@ -12,7 +13,7 @@ from data import KoSyllableDataset
 from model import KoCtoP, KoCtoPLarge
 from utils.plot import set_font
 from utils.rich import new_progress, console
-from utils.utils import makedirs
+from utils.utils import read_csv
 from test import test
 
 
@@ -43,31 +44,10 @@ device = "cuda" if torch.cuda.is_available() else "cpu"
 console.log("Using [green]{}[/green] device\n".format(device))
 
 
-train_set = KoSyllableDataset()
-test_set = KoSyllableDataset(train=False)
-train_loader = DataLoader(train_set, args.batch_size, shuffle=True)
-test_loader = DataLoader(test_set, args.batch_size, shuffle=True)
-console.log(f'데이터 로드 완료! (train set: {len(train_set)} / test set: {len(test_set)})')
-
-
-save_dir = 'save/'
-makedirs(save_dir)
-
-file_name = args.load_model
-start = int(file_name.split('-')[-1].replace('.pth','')) if file_name else 0
-model = KoCtoPLarge().to(device)
-if file_name:
-    model.load_state_dict(torch.load(save_dir+file_name))
-console.log('모델 {} 완료!'.format('로드' if file_name else '준비'))
-
-loss_fn = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-console.log('lr:', np.format_float_scientific(args.lr, exp_digits=1))
-
-
 class Trainer:
+    MODEL_NAME = 'model.pt'
     TRAIN_STEP_RESULT_PATH = "train_step_result.csv"
-    train_step_result = {'n_learn':[], 'loss': [], 'acc': []}
+    train_step_result = {'n_learn': [], 'loss': [], 'acc': []}
 
     def __init__(self, train_loader, loss_fn, optimizer, device, print_every, save_dir):
         self.train_loader = train_loader
@@ -77,31 +57,32 @@ class Trainer:
         self.print_every = print_every
         self.save_dir = save_dir
         self.progress = new_progress()
-  
 
-    def train(self, model, batch_size, epochs):
+        if os.path.exists(save_dir+Trainer.TRAIN_STEP_RESULT_PATH):
+            Trainer.train_step_result = read_csv(save_dir+Trainer.TRAIN_STEP_RESULT_PATH, return_dict=True)
+            self.n_learn = Trainer.train_step_result['n_learn'][-1]
+        else:
+            self.n_learn = 0
+
+    def train(self, model, epochs):
         self.progress.start()
         task_id = self.progress.add_task(f'epoch 1/{epochs}', total=epochs)
     
         for epoch in range(1, epochs+1):
-            train_loss, train_acc = self.train_epoch(model, batch_size)
+            train_loss, train_acc = self.train_epoch(model)
             test_loss, test_acc = test(model, test_loader, self.loss_fn, self.progress)
             
             self.progress.update(task_id, description=f'epoch {epoch}/{epochs}', advance=1)
-    
-            file_name = model.__class__.__name__ + f'-acc_{(test_acc):>0.3f}%-loss_{test_loss:>6f}.pth'
-            torch.save(model.state_dict(), self.save_dir+file_name)
-            
-            self.progress.log(f'Saved PyTorch Model State to {self.save_dir+file_name}')
+            self.save_model(model, test_acc, test_loss)
         
         self.progress.stop()
 
-
-    def train_epoch(self, model, batch_size):
+    def train_epoch(self, model):
         model.train()
+        start_iter = self.n_learn+self.train_loader.batch_size
         size = len(self.train_loader.dataset)
-    
-        task_id = self.progress.add_task(f'iter {batch_size}/{size}', total=size)
+
+        task_id = self.progress.add_task(f'iter {start_iter}/{size}', total=size)
     
         train_loss, correct, current = 0, 0, 0
         train_loss_per_print, correct_per_print, current_per_print = 0, 0, 0
@@ -130,14 +111,15 @@ class Trainer:
             correct_per_print += correct_batch
             current += len(x)
             current_per_print += len(x)
+            self.n_learn += len(x)
     
-            self.progress.update(task_id, description=f'iter {current}/{size}', advance=len(x))
+            self.progress.update(task_id, description=f'iter {(self.n_learn % size) + current}/{size}', advance=len(x))
             
             if (iter+1) % self.print_every == 0:
                 avg_loss = train_loss_per_print / current_per_print
                 avg_acc = correct_per_print / current_per_print * 100
                 self.progress.log(f"loss: {avg_loss:>6f} | acc: {avg_acc:>0.1f}%")
-                self.save_step_result(self.train_step_result, current, avg_loss, avg_acc)
+                self.save_step_result(avg_loss, avg_acc)
                 train_loss_per_print = 0
                 correct_per_print = 0
                 current_per_print = 0
@@ -145,25 +127,50 @@ class Trainer:
             if current % 10000 == 0:
                 avg_loss = train_loss / current
                 avg_acc = correct / current * 100
-                file_name = model.__class__.__name__ + f'-acc_{avg_acc:>0.2f}%-loss_{avg_loss:>6f}-{start+current}.pth'
-                torch.save(model.state_dict(), self.save_dir+file_name)
-            
-                self.progress.log(f'Saved PyTorch Model State to {self.save_dir+file_name}')
-        
+                self.save_model(model, avg_acc, avg_loss)
+                
         self.progress.remove_task(task_id)
         train_loss /= current
         correct /= current
         return train_loss, correct * 100
     
+    def save_model(self, model, acc, loss):
+        torch.save(model.state_dict(), self.save_dir+Trainer.MODEL_NAME)
+        self.progress.log(f'Saved PyTorch Model State to {self.save_dir+Trainer.MODEL_NAME}')
 
-    def save_step_result(self, train_step_result: dict, current: int, loss: float, acc: float) -> None:
-        train_step_result["n_learn"].append(current)
-        train_step_result["loss"].append(f'{loss:>6f}')
-        train_step_result["acc"].append(f'{acc:>0.1f}')
+    def save_step_result(self, loss: float, acc: float) -> None:
+        Trainer.train_step_result["n_learn"].append(self.n_learn)
+        Trainer.train_step_result["loss"].append(f'{loss:>6f}')
+        Trainer.train_step_result["acc"].append(f'{acc:>0.1f}')
         
-        train_step_df = pd.DataFrame(train_step_result)
-        train_step_df.to_csv(self.save_dir+Trainer.TRAIN_STEP_RESULT_PATH, encoding="UTF-8", index=False)
+        file_name = Trainer.TRAIN_STEP_RESULT_PATH
+        train_step_df = pd.DataFrame(Trainer.train_step_result)
+        train_step_df.to_csv(self.save_dir+file_name, encoding="UTF-8", index=False)
+
+
+train_set = KoSyllableDataset()
+test_set = KoSyllableDataset(train=False)
+train_loader = DataLoader(train_set, args.batch_size, shuffle=True)
+test_loader = DataLoader(test_set, args.batch_size, shuffle=True)
+console.log(f'데이터 로드 완료! (train set: {len(train_set)} / test set: {len(test_set)})')
+
+
+file_path = args.load_model
+save_datetime = file_path.split('/')[0] if file_path else \
+    time.strftime('%Y%m%d_%H%M%S', time.localtime())
+
+save_dir = f'save/{save_datetime}/'
+os.makedirs(save_dir, exist_ok=True)
+
+model = KoCtoPLarge().to(device)
+if file_path:
+    model.load_state_dict(torch.load(save_dir+file_path.split('/')[1]))
+console.log('모델 {} 완료!'.format('로드' if file_path else '준비'))
+
+loss_fn = nn.CrossEntropyLoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+console.log('lr:', np.format_float_scientific(args.lr, exp_digits=1))
 
 
 trainer = Trainer(train_loader, loss_fn, optimizer, device, args.print_every, save_dir)
-trainer.train(model, args.batch_size, args.epochs)
+trainer.train(model, args.epochs)

@@ -1,19 +1,12 @@
-import pandas as pd
 import matplotlib.pyplot as plt
+from matplotlib._color_data import TABLEAU_COLORS
 import numpy as np
 
-
-def read_csv(csv_path, return_dict=False):
-    df = pd.read_csv(csv_path)
     
-    col_list = []
-    for col in df.keys():
-        col_list.append(df[col].tolist())
+from utils.utils import read_csv
 
-    if return_dict:
-        return dict(zip(*col_list))
-    else:
-        return (*col_list,)
+
+TABLEAU_COLORS = TABLEAU_COLORS.values()
 
 
 def smooth_curve(x):
@@ -28,33 +21,50 @@ def smooth_curve(x):
     return y[5:len(y)-5]
 
 
-def loss_graph(losses, smooth=True, ylim=None):
-    x = np.arange(len(losses))
-    y = smooth_curve(losses) if smooth and len(losses) > 10 else losses
-    plt.plot(x, y, f"-", label="loss")
-    plt.xlabel("iterations")
+def loss_graphs(losses_dic, smooth=True, ylim=None, xlabel='iterations', colors=TABLEAU_COLORS):
+    keys = list(losses_dic.keys())
+    for key, color in zip(keys, colors):
+        x = np.arange(len(losses_dic[key]))
+        y = smooth_curve(losses_dic[key]) if smooth else losses_dic[key]
+        plt.plot(x, y, label=key) # f"-{color}"
+    plt.xlabel(xlabel)
     plt.ylabel("loss")
     plt.ylim(0, ylim)
     plt.legend(loc='upper right')
     plt.show()
 
 
-def accuracy_graph(accs, ylim_min=None):
+def accuracy_graphs(accs_dic, ylim_min=None, xlabel='epochs', colors=TABLEAU_COLORS):
     markers = {'train': 'o', 'test': 's'}
-    x = np.arange(len(accs))
-    if max(accs) <= 1: 
-        accs = np.array(accs)*100
-    plt.plot(x, accs, f"-", label='test acc')
-    plt.xlabel("epochs")
+    keys = list(accs_dic.keys())
+    for key, color in zip(keys, colors):
+        if max(accs_dic[key]) <= 1: 
+            accs_dic[key] = np.array(accs_dic[key])*100
+        x = np.arange(len(accs_dic[key]))
+        plt.plot(x, accs_dic[key], f"-", label=key)
+    plt.xlabel(xlabel)
     plt.ylabel("accuracy")
     plt.ylim(ylim_min, 100)
-    plt.legend(loc='lower right') # 그래프 이름 표시
+    plt.legend(loc='lower right')
     plt.show()
 
 
 if __name__ == '__main__':
-    csv_path = 'save/train_step_result.csv'
-    _, losses, accs = read_csv(csv_path)
 
-    loss_graph(losses, smooth=False)
-    accuracy_graph(accs)
+    csv_paths = (
+        '220623_023400/train_step_result.csv', 
+        '220623_101400/train_step_result.csv',
+    )
+    titles = (
+        'Drop_err', 
+        'Relu',
+    )
+
+    losses_dict, accs_dict = {}, {}
+    for csv_path, title in zip(csv_paths, titles):
+        _, losses, accs = read_csv('save/'+csv_path)
+        losses_dict[title] = losses
+        accs_dict[title] = accs
+
+    loss_graphs(losses_dict, smooth=False, xlabel='iterations (20 times)')
+    accuracy_graphs(accs_dict, xlabel='iterations (20 times)')

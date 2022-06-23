@@ -3,6 +3,7 @@ import urllib.request
 from urllib.parse import quote
 import zipfile
 import numpy as np
+import pandas as pd
 import torch
 from PIL import Image
 from torchvision.transforms import ToTensor, ToPILImage
@@ -61,8 +62,7 @@ def get_file(url, file_name=None, cache_dir='./data/'):
         file_name = url[url.rfind('/') + 1:]
     file_path = os.path.join(cache_dir, file_name)
 
-    if not os.path.exists(cache_dir):
-        os.mkdir(cache_dir)
+    os.makedirs(cache_dir, exist_ok=True)
 
     if os.path.exists(file_path):
         return file_path
@@ -159,3 +159,23 @@ def get_idxs_to_crop(x):
         xl += 1
 
     return xl, yt, xr, yb
+
+
+# =============================================================================
+# read function
+# ============================================================================= 
+
+def read_csv(csv_path, return_dict=False):
+    df = pd.read_csv(csv_path)
+
+    col_list = []
+    for col in df.keys():
+        col_list.append(df[col].tolist())
+    
+    if return_dict:
+        df_dict = {}
+        for key, col in zip(df.keys(), col_list):
+            df_dict[key] = col
+        return df_dict
+    else:
+        return (*col_list,)

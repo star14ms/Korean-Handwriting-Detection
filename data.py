@@ -7,7 +7,8 @@ from glob import glob
 from PIL import Image
 from PIL.ImageOps import invert
 
-from utils.utils import get_file, unzip, Resize
+from kohwctop.transform import Resize
+from utils.utils import get_file, unzip
 import tools as hangul_tools
 
 

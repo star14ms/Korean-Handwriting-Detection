@@ -7,7 +7,6 @@ if '__file__' in globals():
     import os, sys
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
-from utils.utils import makedirs
 from utils.rich import new_progress
 import shutil
 from tools.constant import DEFAULT_OUTPUT_DIR
@@ -19,8 +18,8 @@ def seperate_data_train_and_test(data_dir=DEFAULT_OUTPUT_DIR, test_rate=0.2):
     data_all = os.listdir(src_dir)
 
     test_data = random.sample(data_all, math.ceil(len(data_all)*test_rate))
-
-    makedirs(target_dir)
+    
+    os.makedirs(target_dir, exist_ok=True)
     
     with new_progress() as progress:
         task_id = progress.add_task('[green]seperate test data', total=len(test_data))

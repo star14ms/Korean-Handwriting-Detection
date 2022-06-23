@@ -4,17 +4,6 @@ from urllib.parse import quote
 import zipfile
 import numpy as np
 import pandas as pd
-import torch
-from PIL import Image
-from torchvision.transforms import ToTensor, ToPILImage
-
-
-def makedirs(path: str): 
-    try: 
-        os.makedirs(path) 
-    except OSError: 
-        if not os.path.isdir(path): 
-            raise
 
 
 def softmax(x):
@@ -80,7 +69,7 @@ def get_file(url, file_name=None, cache_dir='./data/'):
 
 
 def unzip(file_path, unzip_path='./data/'):
-    makedirs(unzip_path)
+    os.makedirs(unzip_path, exist_ok=True)
     zipdata = zipfile.ZipFile(file_path)
     zipinfos = zipdata.infolist()
 
@@ -102,63 +91,11 @@ def unzip(file_path, unzip_path='./data/'):
             unzip_path2 = unzip_path + unzip_dir
             
             if not os.path.isdir(unzip_path2):
-                makedirs(unzip_path2)
+                os.makedirs(unzip_path2, exist_ok=True)
                 unzip(unzip_path+file_name, unzip_path2)
                 print('압축 해제 완료! - ' + file_name_old + ' -> ' + unzip_dir)
     
     zipdata.close()
-    
-
-# =============================================================================
-# transform function
-# ============================================================================= 
-
-to_pil = ToPILImage()
-to_tensor = ToTensor()
-
-
-class Resize():
-    def __init__(self, size=(64,64), resample=Image.LANCZOS):
-        self.size = size
-        self.resample = resample
-
-    def __call__(self, img):
-        if isinstance(img, (np.ndarray, torch.Tensor)):
-           img = to_pil(img)
-
-        arr = to_tensor(img)
-        # img.show()
-        crop_idxs = get_idxs_to_crop(arr)
-        img = img.crop(crop_idxs)
-        # img.show()
-        img = img.resize(self.size, self.resample)
-        arr = to_tensor(img)
-        # img.show()
-    
-        return arr
-
-
-def get_idxs_to_crop(x): 
-    row_len = x.shape[2] # (C, H, (W))
-    col_len = x.shape[1] # (C, (H), W)
-    
-    yb = col_len
-    while torch.sum(x[:, yb-1:yb, :]) == 0 and yb-1 > 0:
-        yb -= 1
-
-    yt = 0
-    while torch.sum(x[:, yt:yt+1, :]) == 0 and yt+1 < yb:
-        yt += 1
-
-    xr = row_len
-    while torch.sum(x[:, :, xr-1:xr]) == 0 and xr-1 > 0:
-        xr -= 1
-
-    xl = 0
-    while torch.sum(x[:, :, xl:xl+1]) == 0 and xl+1 < xr:
-        xl += 1
-
-    return xl, yt, xr, yb
 
 
 # =============================================================================

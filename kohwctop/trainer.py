@@ -10,7 +10,10 @@ from test import test
 class Trainer:
     MODEL_NAME = 'model.pt'
     TRAIN_STEP_RESULT_PATH = "train_step_result.csv"
-    train_step_result = {'n_learn': [], 'loss': [], 'acc': [], 'phoneme_acc': []}
+    train_step_result = {
+        'n_learn': [], 'loss': [], 'acc': [], 
+        'initial_acc': [], 'medial_acc': [], 'final_acc': [], 
+    }
 
     def __init__(self, train_loader, test_loader, loss_fn, optimizer, device, print_every, save_dir):
         self.train_loader = train_loader
@@ -21,6 +24,7 @@ class Trainer:
         self.print_every = print_every
         self.save_dir = save_dir
         self.progress = new_progress()
+        self.local_info = self.init_local_info()
 
         if os.path.exists(save_dir+Trainer.TRAIN_STEP_RESULT_PATH):
             Trainer.train_step_result = read_csv(save_dir+Trainer.TRAIN_STEP_RESULT_PATH, return_dict=True)
@@ -48,11 +52,9 @@ class Trainer:
 
         task_id = self.progress.add_task(f'iter {start_iter}/{size}', total=size)
         
-        train_loss, train_loss_local = 0, 0
-        correct, correct_local = 0, 0
-        p_correct, p_correct_local = 0, 0
-        current, current_local = 0, 0
-        p_current, p_current_local = 0, 0
+        train_loss, correct, current = 0, 0, 0
+        i_correct, m_correct, f_correct = 0, 0, 0
+        self.init_local_info()
     
         for iter, (x, t) in enumerate(self.train_loader):
             x = x.to(self.device)
@@ -65,62 +67,88 @@ class Trainer:
             loss.backward()
             self.optimizer.step()
     
-            train_loss += loss.item()
-            train_loss_local += loss.item()
-            
             ones = torch.ones([len(x)])
             mask_i = (yi.argmax(1) == ti)
             mask_m = (ym.argmax(1) == tm)
             mask_f = (yf.argmax(1) == tf)
             correct_batch = (ones * mask_i * mask_m * mask_f).sum().item()
-            p_corrent_batch = mask_i.sum().item() + mask_m.sum().item() + mask_f.sum().item()
             
+            loss_batch = loss.item()
+            i_correct_batch = mask_i.sum().item()
+            m_correct_batch = mask_m.sum().item()
+            f_correct_batch = mask_f.sum().item()
+
+            train_loss += loss_batch
             correct += correct_batch
-            correct_local += correct_batch
-            p_correct += p_corrent_batch
-            p_correct_local += p_corrent_batch
+            i_correct += i_correct_batch
+            m_correct += m_correct_batch
+            f_correct += f_correct_batch
             current += len(x)
-            current_local += len(x)
-            p_current += len(x) * 3
-            p_current_local += len(x) * 3
+            self.update_local_info(loss_batch, correct_batch, i_correct_batch, m_correct_batch, f_correct_batch, len(x))
             self.n_learn += len(x)
     
             self.progress.update(task_id, description=f'iter {self.n_learn % size}/{size}', advance=len(x))
             
             if (iter+1) % self.print_every == 0:
-                avg_loss = train_loss_local / current_local
-                avg_acc = correct_local / current_local * 100
-                avg_p_acc = p_correct_local / p_current_local * 100
-                self.progress.log(f"loss: {avg_loss:>6f} | acc: {avg_acc:>0.1f}% | phoneme acc: {avg_p_acc:>0.1f}%")
-                self.save_step_result(avg_loss, avg_acc, avg_p_acc)
-                train_loss_local = 0
-                correct_local = 0
-                p_correct_local = 0
-                current_local = 0
-                p_current_local = 0
+                l = self.local_info
+                avg_loss = l['train_loss'] / l['current']
+                avg_acc = l['correct'] / l['current'] * 100
+                avg_i_acc = l['i_correct'] / l['current'] * 100
+                avg_m_acc = l['m_correct'] / l['current'] * 100
+                avg_f_acc = l['f_correct'] / l['current'] * 100
+                self.progress.log(self.make_log(avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc))
+                self.init_local_info()
                 
             if current % 10000 == 0:
+                self.save_step_result(avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc)
                 avg_loss = train_loss / current
                 avg_acc = correct / current * 100
-                avg_p_acc = p_correct / p_current * 100
-                self.save_model(model, avg_loss, avg_acc, avg_p_acc)
+                avg_i_acc = i_correct / current * 100
+                avg_m_acc = m_correct / current * 100
+                avg_f_acc = f_correct / current * 100
+                self.save_model(model, avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc)
                 
         self.progress.remove_task(task_id)
         train_loss /= current
         correct /= current
         return train_loss, correct * 100
+
+    def init_local_info(self):
+        return {
+            'train_loss': 0,
+            'correct': 0,
+            'i_correct': 0,
+            'm_correct': 0,
+            'f_correct': 0,
+            'current': 0,
+        }
+
+    def update_local_info(self, loss, correct_batch, i_correct_batch, m_correct_batch, f_correct_batch, len_x):
+        self.local_info['train_loss'] += loss
+        self.local_info['correct'] += correct_batch
+        self.local_info['i_correct'] += i_correct_batch
+        self.local_info['m_correct'] += m_correct_batch
+        self.local_info['f_correct'] += f_correct_batch
+        self.local_info['current'] += len_x
     
-    def save_model(self, model, loss, acc, p_acc):
+    def make_log(self, avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc):
+        return 'loss: {:>6f} | acc: {:>0.1f}% (초성 {:>0.1f}%) (중성 {:>0.1f}%) (종성 {:>0.1f}%)'.format(
+            avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc
+        )
+        
+    def save_model(self, model, loss, acc, i_acc, m_acc, f_acc):
         os.makedirs(self.save_dir, exist_ok=True)
         torch.save(model.state_dict(), self.save_dir+Trainer.MODEL_NAME)
         self.progress.log(f'Saved PyTorch Model State to {self.save_dir+Trainer.MODEL_NAME}')
 
-    def save_step_result(self, loss: float, acc: float, p_acc: float) -> None:
+    def save_step_result(self, loss: float, acc: float, i_acc: float, m_acc: float, f_acc: float) -> None:
         os.makedirs(self.save_dir, exist_ok=True)
         Trainer.train_step_result["n_learn"].append(self.n_learn)
         Trainer.train_step_result["loss"].append(f'{loss:>6f}')
         Trainer.train_step_result["acc"].append(f'{acc:>0.1f}')
-        Trainer.train_step_result["phoneme_acc"].append(f'{p_acc:>0.1f}')
+        Trainer.train_step_result["initial_acc"].append(f'{i_acc:>0.1f}')
+        Trainer.train_step_result["medial_acc"].append(f'{m_acc:>0.1f}')
+        Trainer.train_step_result["final_acc"].append(f'{f_acc:>0.1f}')
         
         file_name = Trainer.TRAIN_STEP_RESULT_PATH
         train_step_df = pd.DataFrame(Trainer.train_step_result)

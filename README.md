@@ -24,7 +24,7 @@
 
 ---
 
-## 2. 손글씨 문장을 문자열로 바꾸기 (진행 중)
+## 2. 손글씨 문장을 문자열로 바꾸기 (미완성)
 > [AI Hub 한국어 손글씨 탐지 모델](https://aihub.or.kr/problem_contest/nipa-learning-platform/1)
 
 > [인공지능 놀이터 예제 코드 (Baseline Code)](https://ai-korea.kr/playground/selectTutorialPlayground.do)
@@ -76,12 +76,29 @@ python data.py # 데이터 없으면 생성시킴
 ---
 
 ## 3. 학습
-> 학습한 모델 저장되는 경로: [save/](save/)
+> 학습한 모델 저장되는 경로: [outputs/](outputs/)
 ```python
-python train.py --epoch 1 --batch-size 50
-# --epoch: 몇 바퀴 학습시킬 건지
-# --batch-size: 묶어서 학습할 수
+python train.py train.epoch=1 train.batch_size=50
 ```
+
+> 줄 수 있는 인자 목록 ([config/](config/)*.yaml 파일에서도 설정 가능)
+```
+train.epoch: 몇 바퀴 학습시킬 건지
+train.batch_size: 묶어서 학습할 수
+train.lr: 학습률
+train.print_every: 학습 로그 출력하는 간격
+train.load_model: 이어서 학습시킬 모델 날짜 부분 경로
+
+model.layer_in_channels: 합성곱 계층으로 들어가는 채널 수들
+model.layer_out_channels: 합성곱 계층에서 나오는 채널 수들
+model.hiddens: 완전연결 계층 노드 수
+model.conv_activation: 합성곱 계층 활성화 함수
+model.ff_activation: 완전연결 계층 활성화 함수
+```
+
+> 학습 로그
+
+![](/insight/%ED%95%99%EC%8A%B5%20%EB%A1%9C%EA%B7%B8.png)
 
 ---
 

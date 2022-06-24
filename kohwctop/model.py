@@ -50,6 +50,9 @@ class KoCtoPSmall(SaveFeatureModule):
     ) -> None:
         super().__init__()
         assert len(layer_in_channels) == len(layer_out_channels)
+        for next_in_chan, previous_out_chan in zip(layer_in_channels[1:], layer_out_channels[:-1]):
+            assert next_in_chan == previous_out_chan
+        
         c2_f_size = input_size // (2**2)
         c3_f_size = input_size // (2**3)
         in_features = (layer_out_channels[-2]*c2_f_size*c2_f_size) + (layer_out_channels[-1]*c3_f_size*c3_f_size)
@@ -111,9 +114,9 @@ class KoCtoPSmall(SaveFeatureModule):
         return y1, y2, y3
 
 
-class KoCtoP(nn.Module):
+class KoCtoP(SaveFeatureModule):
     def __init__(
-        self, 
+        self,
         input_size=64, 
         layer_in_channels=(1, 64, 128, 256), 
         layer_out_channels=(64, 128, 256, 512),
@@ -123,6 +126,9 @@ class KoCtoP(nn.Module):
     ) -> None:
         super().__init__()
         assert len(layer_in_channels) == len(layer_out_channels)
+        for next_in_chan, previous_out_chan in zip(layer_in_channels[1:], layer_out_channels[:-1]):
+            assert next_in_chan == previous_out_chan
+        
         last_conv_feature_size = input_size // (2**len(layer_in_channels))
         in_features = (layer_out_channels[-1]*(last_conv_feature_size**2))
         

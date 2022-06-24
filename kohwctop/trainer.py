@@ -2,20 +2,22 @@ import torch
 import os
 import pandas as pd
 
-from utils.rich import new_progress
+from utils.rich import new_progress, console
 from utils.utils import read_csv
 from test import test
 
 
 class Trainer:
     MODEL_NAME = 'model.pt'
+    TRAINER_STATE_NAME = 'trainer_states.pt'
     TRAIN_STEP_RESULT_PATH = "train_step_result.csv"
     train_step_result = {
         'n_learn': [], 'loss': [], 'acc': [], 
         'initial_acc': [], 'medial_acc': [], 'final_acc': [], 
     }
 
-    def __init__(self, train_loader, test_loader, loss_fn, optimizer, device, print_every, save_dir):
+    def __init__(self, model, train_loader, test_loader, loss_fn, optimizer, device, print_every, save_dir, load_model_date_path=''):
+        self.model = model
         self.train_loader = train_loader
         self.test_loader = test_loader
         self.loss_fn = loss_fn
@@ -24,24 +26,28 @@ class Trainer:
         self.print_every = print_every
         self.save_dir = save_dir
         self.progress = new_progress()
-        self.local_info = self.init_local_info()
+        self.epoch = 0
+        self.init_local_info()
 
-        if os.path.exists(save_dir+Trainer.TRAIN_STEP_RESULT_PATH):
-            Trainer.train_step_result = read_csv(save_dir+Trainer.TRAIN_STEP_RESULT_PATH, return_dict=True)
+        if load_model_date_path:
+            self.load_model()
+            Trainer.train_step_result = read_csv(self.save_dir+Trainer.TRAIN_STEP_RESULT_PATH, return_dict=True)
             self.n_learn = Trainer.train_step_result['n_learn'][-1]
         else:
             self.n_learn = 0
 
-    def train(self, model, epochs):
+        console.log()
+
+    def train(self, epochs):
         self.progress.start()
         task_id = self.progress.add_task(f'epoch 1/{epochs}', total=epochs)
     
-        for epoch in range(1, epochs+1):
-            train_loss, train_acc = self.train_epoch(model)
-            test_loss, test_acc = test(model, self.test_loader, self.loss_fn, self.progress)
+        for epoch in range(self.epoch, epochs+1):
+            train_loss, train_acc = self.train_epoch(self.model)
+            test_loss, test_acc = test(self.model, self.test_loader, self.loss_fn, self.progress)
             
             self.progress.update(task_id, description=f'epoch {epoch}/{epochs}', advance=1)
-            self.save_model(model, test_loss, test_acc, -1)
+            self.save_model(self.model, test_loss, test_acc, -1)
         
         self.progress.stop()
 
@@ -114,7 +120,7 @@ class Trainer:
                 avg_m_acc = m_correct / current * 100
                 avg_f_acc = f_correct / current * 100
                 self.save_step_result()
-                self.save_model(model)
+                self.save_model()
                 
         self.progress.remove_task(task_id)
         train_loss /= current
@@ -122,13 +128,9 @@ class Trainer:
         return train_loss, correct * 100
 
     def init_local_info(self):
-        return {
-            'train_loss': 0,
-            'correct': 0,
-            'i_correct': 0,
-            'm_correct': 0,
-            'f_correct': 0,
-            'current': 0,
+        self.local_info = {
+            'train_loss': 0, 'current': 0, 'correct': 0,
+            'i_correct': 0, 'm_correct': 0, 'f_correct': 0, 
         }
 
     def update_local_info(self, loss, correct_batch, i_correct_batch, m_correct_batch, f_correct_batch, len_x):
@@ -144,10 +146,26 @@ class Trainer:
             avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc
         )
         
-    def save_model(self, model):
+    def save_model(self):
         os.makedirs(self.save_dir, exist_ok=True)
-        torch.save(model.state_dict(), self.save_dir+Trainer.MODEL_NAME)
+        torch.save(self.model.state_dict(), self.save_dir+Trainer.MODEL_NAME)
+
+        trainer_states = {
+            'optimizer_state_dict': self.optimizer.state_dict(),
+            'train_loader': self.train_loader,
+            'epoch': self.epoch,
+        }
+        torch.save(trainer_states, self.save_dir+Trainer.TRAINER_STATE_NAME)
         self.progress.log(f'Saved PyTorch Model State to {self.save_dir+Trainer.MODEL_NAME}')
+
+    def load_model(self):
+        self.model.load_state_dict(torch.load(self.save_dir+Trainer.MODEL_NAME))
+
+        trainer_states = torch.load(self.save_dir+Trainer.TRAINER_STATE_NAME)
+        self.optimizer.load_state_dict(trainer_states['optimizer_state_dict'])
+        self.train_loader = trainer_states['train_loader']
+        self.epoch = trainer_states['epoch']
+        console.log('모델 로드 완료!')
 
     def save_step_result(self) -> None:
         os.makedirs(self.save_dir, exist_ok=True)

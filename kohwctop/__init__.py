@@ -12,6 +12,13 @@ class TrainConfig:
 
 
 @dataclass
+class TestConfig:
+    batch_size: int = 50   # 묶어서 학습할 숫자 (batch size)
+    print_every: int = 20  # 테스트 로그 출력하는 간격 (단위: batch))
+    load_model: str = ''   # 테스트할 모델 날짜 부분 경로 (model weight date path to load)
+
+
+@dataclass
 class ModelConfig:
     input_size: int = 64                                # 모델에 넣는 이미지 크기
     layer_in_channels: List[int] = (1, 64, 128, 256)    # 합성곱 계층으로 들어가는 채널 수들

@@ -8,7 +8,7 @@ from tools.constant import label_to_syllable
 
 
 @torch.no_grad()
-def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
+def test(model, test_loader, loss_fn, progress, print_every, show_wrong_info=False):
     model.eval()
     device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
     batch_size = test_loader.batch_size
@@ -16,7 +16,13 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
     task_id = progress.add_task(f'iter {batch_size}/{size}', total=size)
 
     test_loss, correct, current = 0, 0, 0
-    
+    i_correct, m_correct, f_correct = 0, 0, 0
+
+    def make_log(avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc):
+        return 'loss: {:>6f} | acc: {:>0.1f}% (초성 {:>0.1f}%) (중성 {:>0.1f}%) (종성 {:>0.1f}%)'.format(
+            avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc
+        )
+
     for iter, (x, t) in enumerate(test_loader):
         x = x.to(device)
         yi, ym, yf = model(x)
@@ -25,17 +31,27 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
         
         ti, tm, tf = t.values()
         loss = loss_fn(yi, ti) + loss_fn(ym, tm) + loss_fn(yf, tf)
-        test_loss += loss.item()
         
         ones = torch.ones([len(x)])
         mask_i = (pi == ti)
         mask_m = (pm == tm)
         mask_f = (pf == tf)
         correct_info = ones * mask_i * mask_m * mask_f
-        n_correct = correct_info.sum().item()
-        correct += n_correct
+        correct_batch = (ones * mask_i * mask_m * mask_f).sum().item()
+        
+        loss_batch = loss.item()
+        i_correct_batch = mask_i.sum().item()
+        m_correct_batch = mask_m.sum().item()
+        f_correct_batch = mask_f.sum().item()
+        
+        test_loss += loss_batch
+        correct += correct_batch
+        i_correct += i_correct_batch
+        m_correct += m_correct_batch
+        f_correct += f_correct_batch
+        current += len(x)
 
-        if show_wrong_info and n_correct != len(x):
+        if show_wrong_info and correct_batch != len(x):
             for idx in torch.where(correct_info == False)[0]:
                 char_y = label_to_syllable(
                     pi[idx].item(), 
@@ -50,11 +66,16 @@ def test(model, test_loader, loss_fn, progress, show_wrong_info=False):
                 text = '예측: {} 정답: {}'.format(char_y, char_t)
                 show_img_and_scores(x[idx].cpu(), yi[idx], ym[idx], yf[idx], title=text)
 
-        current += len(x)
         progress.update(task_id, description=f'iter {current}/{size}', advance=len(x))
 
-        if iter % 10 == 0:
-            progress.log(f"loss: {test_loss/current:>6f} acc: {correct/current*100:>0.3f}%")
+        if (iter+1) % print_every == 0:
+            avg_loss = test_loss / current
+            avg_acc = correct / current * 100
+            avg_i_acc = i_correct / current * 100
+            avg_m_acc = m_correct / current * 100
+            avg_f_acc = f_correct / current * 100
+
+            progress.log(make_log(avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc))
 
     test_loss /= current
     correct /= current

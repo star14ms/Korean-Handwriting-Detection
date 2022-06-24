@@ -8,7 +8,7 @@ class TrainConfig:
     batch_size: int = 50   # 묶어서 학습할 숫자 (batch size)
     lr: float = 1e-3       # 학습률 (Learning Rate)
     print_every: int = 20  # 학습 로그 출력하는 간격 (단위: batch))
-    load_model: str = '' # 이어서 학습시킬 모델 경로 (model weight path to load)
+    load_model: str = ''   # 이어서 학습시킬 모델 날짜 부분 경로 (model weight date path to load)
     
 
 @dataclass

@@ -55,19 +55,22 @@ def accuracy_graphs(accs_dic, ylim_min=None, xlabel='epochs', colors=TABLEAU_COL
 if __name__ == '__main__':
 
     csv_paths = (
-        '220623_023400/train_step_result.csv', 
-        '220623_101400/train_step_result.csv',
+        # 'save/220623_023400/train_step_result.csv', 
+        'save/220624_031725/train_step_result.csv',
+        'outputs/2022-06-24/12-00-33/train_step_result.csv',
     )
     titles = (
-        'Drop_err', 
+        # 'Drop_err',
         'Relu',
+        'hardtanh',
     )
 
     losses_dict, accs_dict = {}, {}
     for csv_path, title in zip(csv_paths, titles):
-        _, losses, accs = read_csv('save/'+csv_path)
+        _, losses, accs, phoneme_accs = read_csv(csv_path)
         losses_dict[title] = losses
         accs_dict[title] = accs
+        accs_dict[title+' (phoneme)'] = phoneme_accs
 
     loss_graphs(losses_dict, smooth=False, xlabel='iterations (20 times)')
     accuracy_graphs(accs_dict, xlabel='iterations (20 times)')

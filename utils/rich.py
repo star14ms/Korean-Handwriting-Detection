@@ -19,6 +19,7 @@ def new_progress():
         TimeElapsedColumn(),
         console=console,
         transient=False,
+        refresh_per_second=2,
     )
 
     return progress

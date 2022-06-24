@@ -78,11 +78,12 @@ class KoSyllableDataset(Dataset):
     to_tensor = ToTensor()
     to_pil = ToPILImage()
 
-    def __init__(self, data_dir='./data-syllable/', transform=Compose([Resize()]), target_transform=None, train=True):
+    def __init__(self, data_dir='./data-syllable/', transform=Compose([Resize()]), target_transform=None, label_type='label', train=True):
         self.data_dir = data_dir
         self.img_dir = f'{data_dir}train/' if train else f'{data_dir}test/'
         self.transform = transform
         self.target_transform = target_transform
+        self.label_type = label_type
 
         if not os.path.exists(self.img_dir):
             self.prepare()
@@ -104,7 +105,7 @@ class KoSyllableDataset(Dataset):
         file_name = self.data[idx]
         image = Image.open(self.img_dir + file_name).convert('L')
         # label = self.labels[idx]
-        label = [label['label'] for label in self.labels if label["file_name"] == file_name][0] if self.labels is not None else ''
+        label = [label[self.label_type] for label in self.labels if label["file_name"] == file_name][0] if self.labels is not None else ''
         if self.transform:
             image = self.transform(image)
         if self.target_transform:

@@ -96,17 +96,25 @@ class Trainer:
                 avg_i_acc = l['i_correct'] / l['current'] * 100
                 avg_m_acc = l['m_correct'] / l['current'] * 100
                 avg_f_acc = l['f_correct'] / l['current'] * 100
+
+                Trainer.train_step_result["n_learn"].append(self.n_learn)
+                Trainer.train_step_result["loss"].append(f'{avg_loss:>6f}')
+                Trainer.train_step_result["acc"].append(f'{avg_acc:>0.1f}')
+                Trainer.train_step_result["initial_acc"].append(f'{avg_i_acc:>0.1f}')
+                Trainer.train_step_result["medial_acc"].append(f'{avg_m_acc:>0.1f}')
+                Trainer.train_step_result["final_acc"].append(f'{avg_f_acc:>0.1f}')
+
                 self.progress.log(self.make_log(avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc))
                 self.init_local_info()
                 
             if current % 10000 == 0:
-                self.save_step_result(avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc)
                 avg_loss = train_loss / current
                 avg_acc = correct / current * 100
                 avg_i_acc = i_correct / current * 100
                 avg_m_acc = m_correct / current * 100
                 avg_f_acc = f_correct / current * 100
-                self.save_model(model, avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc)
+                self.save_step_result()
+                self.save_model(model)
                 
         self.progress.remove_task(task_id)
         train_loss /= current
@@ -136,20 +144,13 @@ class Trainer:
             avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc
         )
         
-    def save_model(self, model, loss, acc, i_acc, m_acc, f_acc):
+    def save_model(self, model):
         os.makedirs(self.save_dir, exist_ok=True)
         torch.save(model.state_dict(), self.save_dir+Trainer.MODEL_NAME)
         self.progress.log(f'Saved PyTorch Model State to {self.save_dir+Trainer.MODEL_NAME}')
 
-    def save_step_result(self, loss: float, acc: float, i_acc: float, m_acc: float, f_acc: float) -> None:
+    def save_step_result(self) -> None:
         os.makedirs(self.save_dir, exist_ok=True)
-        Trainer.train_step_result["n_learn"].append(self.n_learn)
-        Trainer.train_step_result["loss"].append(f'{loss:>6f}')
-        Trainer.train_step_result["acc"].append(f'{acc:>0.1f}')
-        Trainer.train_step_result["initial_acc"].append(f'{i_acc:>0.1f}')
-        Trainer.train_step_result["medial_acc"].append(f'{m_acc:>0.1f}')
-        Trainer.train_step_result["final_acc"].append(f'{f_acc:>0.1f}')
-        
         file_name = Trainer.TRAIN_STEP_RESULT_PATH
         train_step_df = pd.DataFrame(Trainer.train_step_result)
         train_step_df.to_csv(self.save_dir+file_name, encoding="UTF-8", index=False)

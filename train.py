@@ -32,7 +32,7 @@ def train(config: DictConfig, save_dir: str):
     file_path = config.train.load_model
     model = KoCtoP(**config.model).to(device)
     if file_path:
-        model.load_state_dict(torch.load(save_dir+file_path.split('/')[1]))
+        model.load_state_dict(torch.load(save_dir+file_path.split('/')[-1]))
     console.log('모델 {} 완료!'.format('로드' if file_path else '준비'))
     
     loss_fn = nn.CrossEntropyLoss()
@@ -53,7 +53,7 @@ def main(config: DictConfig) -> None:
     console.log(OmegaConf.to_yaml(config))
 
     if config.train.load_model:
-        save_datetime = config.train.load_model.split('/')[0]
+        save_datetime = '/'.join(config.train.load_model.split('/')[:2])
     else:
         ymd = os.listdir('./outputs')[-1]
         hms = os.listdir('./outputs/'+ymd)[-1]

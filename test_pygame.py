@@ -5,7 +5,7 @@ import argparse
 import time
 import numpy as np
 
-from kohwctop.model import KoCtoPSmall, KoCtoP
+from kohwctop.model import KoCtoP
 from kohwctop.transform import Resize
 from kohwctop.test import predict
 from utils.plot import set_font

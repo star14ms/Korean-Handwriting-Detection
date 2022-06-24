@@ -176,3 +176,63 @@ class KoCtoP(SaveFeatureModule):
         y3 = self.liner_final(x)
 
         return y1, y2, y3
+
+
+class KoCtoP_Sep(SaveFeatureModule):
+    def __init__(
+        self,
+        input_size=64, 
+        layer_in_channels=(1, 32, 64, 128), 
+        layer_out_channels=(32, 64, 128, 256),
+        hiddens=256,
+        conv_activation='relu',
+        ff_activation='relu',
+    ) -> None:
+        super().__init__()
+        assert len(layer_in_channels) == len(layer_out_channels)
+        for next_in_chan, previous_out_chan in zip(layer_in_channels[1:], layer_out_channels[:-1]):
+            assert next_in_chan == previous_out_chan
+        
+        last_conv_feature_size = input_size // (2**len(layer_in_channels))
+        in_features = (layer_out_channels[-1]*(last_conv_feature_size**2))
+        
+        self.i_conv_layers_list = nn.ModuleList()
+        self.m_conv_layers_list = nn.ModuleList()
+        self.f_conv_layers_list = nn.ModuleList()
+        
+        self.imf_conv_layers_list = [self.i_conv_layers_list, self.m_conv_layers_list, self.f_conv_layers_list]
+        for conv_layers in self.imf_conv_layers_list:
+            for in_channels, out_channels in zip(layer_in_channels, layer_out_channels):
+                conv_layers.append(
+                    nn.Sequential(
+                        Conv2d_Norm(in_channels, out_channels, activation=conv_activation), 
+                        Conv2d_Norm(out_channels, out_channels, activation=conv_activation), 
+                        nn.MaxPool2d(kernel_size=2, stride=2),
+                    )
+                )
+   
+        self.imf_ff_layers = nn.ModuleList() # 초성 (initial), 중성 (medial), 종성 (final)
+        for output_dim in [len_initial, len_medial, len_final]:
+            self.imf_ff_layers.append(
+                nn.Sequential(
+                    nn.Flatten(),
+                    nn.Dropout(),
+                    Linear_Norm(in_features, hiddens, ff_activation),
+                    nn.Dropout(),
+                    nn.Linear(hiddens, output_dim),
+                    nn.Dropout(),
+                )
+            )
+
+    def forward(self, x):
+        ys = []
+        for idx, (conv_layers_list, ff_layers) in enumerate(zip(self.imf_conv_layers_list, self.imf_ff_layers)):
+            y = conv_layers_list[0](x) # [N, 64, 32, 32]
+            if self.saving_features_available:
+                self.save_feature_map('conv1', y)
+            y = conv_layers_list[1](y) # [N, 128, 16, 16]
+            y = conv_layers_list[2](y) # [N, 256, 8, 8]
+            y = conv_layers_list[3](y) # [N, 512, 4, 4]
+            ys.append(ff_layers(y)) # [N, 8192]
+
+        return (*ys,)

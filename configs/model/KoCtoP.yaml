@@ -1,0 +1,6 @@
+input_size: 64 
+layer_in_channels: [1, 64, 128, 256]
+layer_out_channels: [64, 128, 256, 512]
+hiddens: 256
+conv_activation: 'relu'
+ff_activation: 'relu'

@@ -159,5 +159,6 @@ etc/
 *.pth
 *.pt
 *.csv
-save/*.json
+outputs/
+save/*
 !save/220623_101400/*

@@ -1,0 +1,5 @@
+epoch: 1
+batch_size: 50
+lr: 1e-3
+print_every: 20
+load_model: ''

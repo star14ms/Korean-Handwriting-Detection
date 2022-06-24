@@ -56,13 +56,17 @@ if __name__ == '__main__':
 
     csv_paths = (
         # 'save/220623_023400/train_step_result.csv', 
-        'save/220624_031725/train_step_result.csv',
+        # 'save/220624_031725/train_step_result.csv',
         'outputs/2022-06-24/12-00-33/train_step_result.csv',
+        'outputs/2022-06-24/13-03-29/train_step_result.csv',
+        'outputs/2022-06-24/15-50-05/train_step_result.csv',
     )
     titles = (
         # 'Drop_err',
-        'Relu',
-        'hardtanh',
+        # 'Relu',
+        '4conv_64-512c_256h',
+        '5conv_64-512c_512h',
+        '4conv_32-256c_256h',
     )
 
     losses_dict, accs_dict = {}, {}

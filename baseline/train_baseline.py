@@ -9,6 +9,10 @@ from torch.utils.data import DataLoader
 import torch.optim as optim
 from torch.autograd import Variable
 
+if '__file__' in globals():
+    import os, sys
+    sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+
 from baseline.data import CustomDataset, alignCollate, strLabelConverter
 from baseline.model import CRNN, weights_init
 from baseline.common import train, test, validation, create_json

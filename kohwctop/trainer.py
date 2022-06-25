@@ -36,9 +36,15 @@ class Trainer:
         else:
             self.n_learn = 0
 
-        console.log()
+        console.log("-" * 60)
+        total_params = sum(p.numel() for p in model.parameters())
+        console.log("num of parameter :", total_params)
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        console.log("trainable params :", trainable_params)
+        console.log("-" * 60)
 
     def train(self, epochs):
+        console.log('Train Start!\n')
         self.progress.start()
         task_id = self.progress.add_task(f'epoch 1/{epochs}', total=epochs)
     

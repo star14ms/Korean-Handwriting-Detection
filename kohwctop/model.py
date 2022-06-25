@@ -72,19 +72,19 @@ class KoCtoPSmall(SaveFeatureModule):
             nn.Dropout(),
         )
         
-        self.liner_initial = nn.Sequential(
+        self.linear_initial = nn.Sequential(
             Linear_Norm(in_features, hiddens),
             nn.Dropout(),
             nn.Linear(hiddens, len_initial),
             nn.Dropout(),
         )
-        self.liner_medial = nn.Sequential(
+        self.linear_medial = nn.Sequential(
             Linear_Norm(in_features, hiddens),
             nn.Dropout(),
             nn.Linear(hiddens, len_medial),
             nn.Dropout(),
         )
-        self.liner_final = nn.Sequential(
+        self.linear_final = nn.Sequential(
             Linear_Norm(in_features, hiddens),
             nn.Dropout(),
             nn.Linear(hiddens, len_final),
@@ -107,9 +107,9 @@ class KoCtoPSmall(SaveFeatureModule):
         x = torch.cat([x2, x3], dim=1) # [N, 49152]
         del x2, x3
 
-        y1 = self.liner_initial(x)
-        y2 = self.liner_medial(x)
-        y3 = self.liner_final(x)
+        y1 = self.linear_initial(x)
+        y2 = self.linear_medial(x)
+        y3 = self.linear_final(x)
 
         return y1, y2, y3
 
@@ -147,19 +147,19 @@ class KoCtoP(SaveFeatureModule):
             nn.Dropout(),
         )
         
-        self.liner_initial = nn.Sequential(
+        self.linear_initial = nn.Sequential(
             Linear_Norm(in_features, hiddens, ff_activation),
             nn.Dropout(),
             nn.Linear(hiddens, len_initial),
             nn.Dropout(),
         )
-        self.liner_medial = nn.Sequential(
+        self.linear_medial = nn.Sequential(
             Linear_Norm(in_features, hiddens, ff_activation),
             nn.Dropout(),
             nn.Linear(hiddens, len_medial),
             nn.Dropout(),
         )
-        self.liner_final = nn.Sequential(
+        self.linear_final = nn.Sequential(
             Linear_Norm(in_features, hiddens, ff_activation),
             nn.Dropout(),
             nn.Linear(hiddens, len_final),
@@ -171,11 +171,11 @@ class KoCtoP(SaveFeatureModule):
             x = conv_pool(x) # [N, 64, 32, 32], [N, 128, 16, 16], [N, 256, 8, 8], [N, 512, 4, 4]
         x = self.flatten(x) # [N, 8192]
 
-        y1 = self.liner_initial(x)
-        y2 = self.liner_medial(x)
-        y3 = self.liner_final(x)
+        yi = self.linear_initial(x) # 초성 (initial)
+        ym = self.linear_medial(x) # 중성 (medial)
+        yf = self.linear_final(x) # 종성 (final)
 
-        return y1, y2, y3
+        return yi, ym, yf
 
 
 class KoCtoP_Sep(SaveFeatureModule):

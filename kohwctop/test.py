@@ -25,8 +25,7 @@ def test(model, test_loader, loss_fn, progress, print_every, show_wrong_info=Fal
 
     for iter, (x, t) in enumerate(test_loader):
         x = x.to(device)
-        yi, ym, yf = model(x)
-        yi, ym, yf = yi.cpu(), ym.cpu(), yf.cpu()
+        yi, ym, yf = torch._to_cpu(model(x))
         pi, pm, pf = yi.argmax(1), ym.argmax(1), yf.argmax(1)
         
         ti, tm, tf = t.values()
@@ -37,18 +36,13 @@ def test(model, test_loader, loss_fn, progress, print_every, show_wrong_info=Fal
         mask_m = (pm == tm)
         mask_f = (pf == tf)
         correct_info = ones * mask_i * mask_m * mask_f
-        correct_batch = (ones * mask_i * mask_m * mask_f).sum().item()
+        correct_batch = correct_info.sum().item()
         
-        loss_batch = loss.item()
-        i_correct_batch = mask_i.sum().item()
-        m_correct_batch = mask_m.sum().item()
-        f_correct_batch = mask_f.sum().item()
-        
-        test_loss += loss_batch
+        test_loss += loss.item()
         correct += correct_batch
-        i_correct += i_correct_batch
-        m_correct += m_correct_batch
-        f_correct += f_correct_batch
+        i_correct += mask_i.sum().item()
+        m_correct += mask_m.sum().item()
+        f_correct += mask_f.sum().item()
         current += len(x)
 
         if show_wrong_info and correct_batch != len(x):

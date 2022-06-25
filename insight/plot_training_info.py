@@ -11,6 +11,7 @@ from utils.utils import read_csv
 
 TABLEAU_COLORS = TABLEAU_COLORS.values()
 
+
 def smooth_curve(x, beta=2):
     """ kaiser window smoothing """
 
@@ -27,7 +28,8 @@ def smooth_curve(x, beta=2):
     return y[5:len(y)-5]
 
 
-def loss_graphs(losses_dic, smooth=True, ylim=None, xlabel='iterations', colors=TABLEAU_COLORS):
+def loss_graphs(losses_dic, smooth=True, ylim=None, xlabel='Iterations', colors=TABLEAU_COLORS):
+    plt.rc('font', size=18)
     keys = list(losses_dic.keys())
     min_len = min([len(values) for values in losses_dic.values()])
     for key, color in zip(keys, colors):
@@ -35,14 +37,15 @@ def loss_graphs(losses_dic, smooth=True, ylim=None, xlabel='iterations', colors=
         x = np.arange(len(y))
         plt.plot(x, y, label=key) # f"-{color}"
     plt.xlabel(xlabel)
-    plt.ylabel("loss")
+    plt.ylabel("Loss")
     plt.ylim(0, ylim)
     plt.legend(loc='upper right')
     plt.get_current_fig_manager().window.showMaximized()
     plt.show()
 
 
-def accuracy_graphs(accs_dic, ylim_min=None, xlabel='epochs', colors=TABLEAU_COLORS):
+def accuracy_graphs(accs_dic, ylim_min=None, xlabel='Epochs', colors=TABLEAU_COLORS):
+    plt.rc('font', size=18)
     markers = {'train': 'o', 'test': 's'}
     keys = list(accs_dic.keys())
     for key, color in zip(keys, colors):
@@ -51,7 +54,7 @@ def accuracy_graphs(accs_dic, ylim_min=None, xlabel='epochs', colors=TABLEAU_COL
         x = np.arange(len(accs_dic[key]))
         plt.plot(x, accs_dic[key], f"-", label=key)
     plt.xlabel(xlabel)
-    plt.ylabel("accuracy")
+    plt.ylabel("Accuracy")
     plt.ylim(ylim_min, 100)
     plt.legend(loc='lower right')
     plt.get_current_fig_manager().window.showMaximized()
@@ -61,43 +64,11 @@ def accuracy_graphs(accs_dic, ylim_min=None, xlabel='epochs', colors=TABLEAU_COL
 if __name__ == '__main__':
 
     csv_paths = (
-        # 'save/220623_023400/train_step_result.csv', 
-        # 'save/220624_031725/train_step_result.csv',
-        # 'outputs/2022-06-24/12-00-23/train_step_result.csv',
-        # 'outputs/2022-06-24/13-03-20/train_step_result.csv',
-        # 'outputs/2022-06-24/15-49-53/train_step_result.csv',
-        # 'outputs/2022-06-24/22-39-06/train_step_result.csv',
-        # 'outputs/2022-06-24/23-45-03/train_step_result.csv',
-        # 'outputs/2022-06-25/00-05-34/train_step_result.csv',
-        # 'outputs/2022-06-25/00-32-58/train_step_result.csv',
-        # 'outputs/2022-06-25/02-01-25/train_step_result.csv',
-        # 'outputs/2022-06-25/02-54-23/train_step_result.csv',
-        'outputs/2022-06-25/03-51-52/train_step_result.csv',
-        'outputs/2022-06-25/12-54-10/train_step_result.csv',
-        'outputs/2022-06-25/13-18-08/train_step_result.csv',
-        'outputs/2022-06-25/13-57-19/train_step_result.csv',
-        'outputs/2022-06-25/14-09-18/train_step_result.csv',
+        'outputs/2022-06-25/19-44-31/train_step_result.csv',
     )
     titles = (
-        # 'Drop_err',
-        # 'Relu',
-        # '4L_6789c_256h (avg)',
-        # '5L_6789c_512h (avg)',
-        # '4L_5678c_256h (avg)',
-        # '4L_5678c_128h',
-        # '4L_5678c_512h',
-        # '4L_6789c_512h',
-        # '5L_6789c_512h',
-        # '4L_5678c_512h (sep 25b)',
-        # '4L_5678c_512h (sep 25b loss)',
-        '4L_5678c_256h (sep)', # MACs: 0.64 G | Params: 6.68 M
-        '4L_6789c_256h', # MACs: 0.84 G | Params: 11.0 M
-        '4L_6778c_256h', # MACs: 0.52 G | Params: 4.61 M
-        '4L_5678c_256h', # MACs: 0.21 G | Params: 4.34 M
-        '4L_5678c_256h (sep copy)', # MACs: 0.64 G | Params: 6.68 M
+        '4L_5678c_256h (drop 0)', # MACs: 0.64 G | Params: 6.68 M
     )
-    # 4L_6789c_256h (sep) MACs: 2.52 G | Params: 20.37 M
-    # 4L_6778c_256h (sep) MACs: 1.55 G | Params: 7.49 M
     losses_dict, accs_dict = {}, {}
     for csv_path, title in zip(csv_paths, titles):
         _, losses, accs, initial_accs = read_csv(csv_path)[:4]

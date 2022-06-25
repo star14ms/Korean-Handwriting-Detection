@@ -1,0 +1,22 @@
+model:
+  input_size: 64
+  layer_in_channels:
+  - 1
+  - 32
+  - 64
+  - 128
+  layer_out_channels:
+  - 32
+  - 64
+  - 128
+  - 256
+  hiddens: 256
+  conv_activation: relu
+  ff_activation: relu
+  dropout: 0.0
+train:
+  epoch: 1
+  batch_size: 50
+  lr: 0.001
+  print_every: 20
+  load_model: ''

@@ -93,7 +93,7 @@ if __name__ == '__main__':
     pygame.init()
     pygame.display.set_caption("한글 손글씨 감지!")
 
-    font_path = 'NanumSquareRoundEB.ttf'
+    font_path = 'NanumGothicExtraBold.ttf'
     myfont = pygame.font.Font(font_path, 120)
     set_font(font_path)
 

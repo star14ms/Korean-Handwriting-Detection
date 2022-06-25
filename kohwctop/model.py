@@ -111,7 +111,7 @@ class KoCtoPSmall(SaveFeatureModule):
         return yi, ym, yf
 
 
-class KoCtoP(SaveFeatureModule):
+class KoCtoP_Merged(SaveFeatureModule):
     def __init__(
         self,
         input_size=64, 
@@ -170,7 +170,7 @@ class KoCtoP(SaveFeatureModule):
         return yi, ym, yf
 
 
-class KoCtoP_Sep(SaveFeatureModule):
+class KoCtoP(SaveFeatureModule):
     def __init__(
         self,
         input_size=64, 

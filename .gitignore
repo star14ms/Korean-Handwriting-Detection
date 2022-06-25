@@ -156,9 +156,6 @@ data/
 data-syllable/
 etc/
 *.ttf
-*.pth
-*.pt
-*.csv
-outputs/
-save/*
-!save/220623_101400/*
+save/
+outputs/*/*
+!outputs/2022-06-25/19-44-31/

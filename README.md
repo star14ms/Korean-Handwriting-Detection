@@ -94,6 +94,7 @@ model.layer_out_channels: 합성곱 계층에서 나오는 채널 수들
 model.hiddens: 완전연결 계층 노드 수
 model.conv_activation: 합성곱 계층 활성화 함수
 model.ff_activation: 완전연결 계층 활성화 함수
+model.dropout: 드롭아웃 확률 (0~1)
 ```
 
 > 학습 로그
@@ -109,5 +110,18 @@ python test.py --load-model <model path>
 # --load-model: 불러올 모델 경로
 # --batch-size: 묶어서 테스트할 수
 ```
+
+### 직접 글씨 써서 인식해보기
+```python 
+python test_pygame.py --load-model <model path>
+# --load-model: 불러올 모델 경로
+```
+
+> test_pygame.py
+
+![](/insight/pygame.gif)
+
+![](/insight/pygame1.png)
+![](/insight/pygame2.png)
 
 ---

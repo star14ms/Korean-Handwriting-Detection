@@ -1,5 +1,11 @@
 # Handwriting-Detection
 
+> test_pygame.py
+
+![](/insight/pygame.gif)
+
+---
+
 ## 1. 손글씨 음절을 문자열로 바꾸기 (완성)
 
 ### source 
@@ -118,8 +124,6 @@ python test_pygame.py --load-model <model path>
 ```
 
 > test_pygame.py
-
-![](/insight/pygame.gif)
 
 ![](/insight/pygame1.png)
 ![](/insight/pygame2.png)

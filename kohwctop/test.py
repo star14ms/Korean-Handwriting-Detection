@@ -19,7 +19,7 @@ def test(model, test_loader, loss_fn, progress, print_every, show_wrong_info=Fal
     i_correct, m_correct, f_correct = 0, 0, 0
 
     def make_log(avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc):
-        return 'loss: {:>6f} | acc: {:>0.1f}% (초성 {:>0.1f}%) (중성 {:>0.1f}%) (종성 {:>0.1f}%)'.format(
+        return 'loss: {:>6f} | acc: {:>0.2f}% (초성 {:>0.1f}%) (중성 {:>0.1f}%) (종성 {:>0.1f}%)'.format(
             avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc
         )
 

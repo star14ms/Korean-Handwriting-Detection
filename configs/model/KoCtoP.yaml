@@ -4,3 +4,4 @@ layer_out_channels: [64, 128, 256, 512]
 hiddens: 256
 conv_activation: 'relu'
 ff_activation: 'relu'
+dropout: 0.5

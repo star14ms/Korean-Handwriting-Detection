@@ -26,3 +26,4 @@ class ModelConfig:
     hiddens: int = 256                                  # 완전연결 계층 노드 수
     conv_activation: str = 'relu'                       # 합성곱 계층 활성화 함수
     ff_activation: str = 'relu'                         # 완전연결 계층 활성화 함수
+    dropout: float = 0.5

@@ -21,7 +21,7 @@ port = 5050  # 서버 통신 포트
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-CORS(app, resources={'/detect': {'origins': 'http://localhost:19006' }}, )
+CORS(app, resources={'/detect': {'origins': '*' }}, )
 
 
 def allowed_file(filename):

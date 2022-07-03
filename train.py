@@ -11,9 +11,9 @@ from omegaconf import OmegaConf, DictConfig
 from rich.traceback import install
 install()
 
-from data import KoSyllableDataset
-from kohwctop.model import KoCtoP
-from kohwctop import TrainConfig, ConvNetConfig
+from data import KoSyllableDataset, WideCharDataset
+from kohwctop import KoCtoPTrainConfig, ConvNetTrainConfig, KoCtoPConfig, ConvNetConfig
+from kohwctop.model import KoCtoP, ConvNet
 from kohwctop.trainer import Trainer
 from utils.rich import console
 
@@ -21,17 +21,26 @@ from utils.rich import console
 def train(config: DictConfig, save_dir: str):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     console.log("Using [green]{}[/green] device\n".format(device))
+    
+    if 'KoCtoP' in config.model.model:
+        train_set = KoSyllableDataset()
+        test_set = KoSyllableDataset(train=False)
+        train_loader = DataLoader(train_set, config.train.batch_size, shuffle=True)
+        test_loader = DataLoader(test_set, config.train.batch_size, shuffle=True)
+        model_class = KoCtoP
+    elif 'ConvNet' in config.model.model:
+        train_set = WideCharDataset()
+        test_set = []
+        train_loader = DataLoader(train_set, config.train.batch_size, shuffle=True)
+        test_loader = None
+        model_class = ConvNet
 
-    train_set = KoSyllableDataset()
-    test_set = KoSyllableDataset(train=False)
-    train_loader = DataLoader(train_set, config.train.batch_size, shuffle=True)
-    test_loader = DataLoader(test_set, config.train.batch_size, shuffle=True)
     console.log(f'데이터 로드 완료! (train set: {len(train_set)} / test set: {len(test_set)})')
     
-    model = KoCtoP(**config.model).to(device)
+    model = model_class(**config.model).to(device)
     macs, params = profile(model, inputs=(torch.randn(1, 1, 64, 64).to(device),), verbose=False)
     
-    model = KoCtoP(**config.model).to(device)
+    model = model_class(**config.model).to(device)
     console.log('모델 생성 완료! (MACs: {} G | Params: {} M)'.format(
         round(macs/1000/1000/1000, 2), 
         round(params/1000/1000, 2),
@@ -48,8 +57,10 @@ def train(config: DictConfig, save_dir: str):
 
 
 cs = ConfigStore.instance()
-cs.store(group="train", name="train", node=TrainConfig, package="train")
+cs.store(group="model", name="koCtoP", node=KoCtoPConfig, package="model")
 cs.store(group="model", name="convNet", node=ConvNetConfig, package="model")
+cs.store(group="train", name="koCtoP_train", node=KoCtoPTrainConfig, package="train")
+cs.store(group="train", name="convNet_train", node=KoCtoPTrainConfig, package="train")
 
 
 @hydra.main(config_path=os.path.join('.', "configs"), config_name="train", version_base=None)

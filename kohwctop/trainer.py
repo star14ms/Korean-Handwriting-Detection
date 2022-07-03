@@ -27,6 +27,7 @@ class Trainer:
         self.save_dir = save_dir
         self.progress = new_progress()
         self.epoch = 0
+        self.train_epoch = self.train_epoch_imf_loss if 'CtoP' in model.__class__.__name__ else self.train_epoch_basic
         self.init_local_info()
 
         if load_model_date_path:
@@ -48,16 +49,16 @@ class Trainer:
         self.progress.start()
         task_id = self.progress.add_task(f'epoch 1/{epochs}', total=epochs)
     
-        for epoch in range(self.epoch, epochs+1):
+        for epoch in range(self.epoch+1, epochs+1):
             train_loss, train_acc = self.train_epoch(self.model)
-            test_loss, test_acc = test(self.model, self.test_loader, self.loss_fn, self.progress)
+            # test_loss, test_acc = test(self.model, self.test_loader, self.loss_fn, self.progress)
             
-            self.progress.update(task_id, description=f'epoch {epoch}/{epochs}', advance=1)
-            self.save_model(self.model, test_loss, test_acc, -1)
+            self.progress.update(task_id, description=f'epoch {epoch+1}/{epochs}', advance=1)
+            self.save_model()
         
         self.progress.stop()
 
-    def train_epoch(self, model):
+    def train_epoch_imf_loss(self, model):
         model.train()
         start_iter = self.n_learn+self.train_loader.batch_size
         size = len(self.train_loader.dataset)
@@ -133,6 +134,65 @@ class Trainer:
         correct /= current
         return train_loss, correct * 100
 
+    def train_epoch_basic(self, model):
+        model.train()
+        start_iter = self.n_learn+self.train_loader.batch_size
+        size = len(self.train_loader.dataset)
+
+        task_id = self.progress.add_task(f'iter {start_iter}/{size}', total=size)
+        
+        train_loss, correct, current = 0, 0, 0
+        self.init_local_info()
+    
+        for iter, (x, t) in enumerate(self.train_loader):
+            x = x.to(self.device)
+            y = model(x).cpu()
+            
+            loss = self.loss_fn(y, t)
+            self.optimizer.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+    
+            ones = torch.ones([len(x)])
+            correct_mask = (y.argmax(1) == t)
+            correct_batch = (ones * correct_mask).sum().item()
+            
+            loss_batch = loss.item()
+
+            train_loss += loss_batch
+            correct += correct_batch
+            current += len(x)
+            self.update_local_info(loss_batch, correct_batch, 0, 0, 0, len(x))
+            self.n_learn += len(x)
+    
+            self.progress.update(task_id, description=f'iter {self.n_learn % size}/{size}', advance=len(x))
+            
+            if (iter+1) % self.print_every == 0:
+                l = self.local_info
+                avg_loss = l['train_loss'] / l['current']
+                avg_acc = l['correct'] / l['current'] * 100
+
+                Trainer.train_step_result["n_learn"].append(self.n_learn)
+                Trainer.train_step_result["loss"].append(f'{avg_loss:>6f}')
+                Trainer.train_step_result["acc"].append(f'{avg_acc:>0.1f}')
+                Trainer.train_step_result["initial_acc"].append(0)
+                Trainer.train_step_result["medial_acc"].append(0)
+                Trainer.train_step_result["final_acc"].append(0)
+
+                self.progress.log(self.make_log(avg_loss, avg_acc, 0, 0, 0))
+                self.init_local_info()
+                
+            if current % 10000 == 0:
+                avg_loss = train_loss / current
+                avg_acc = correct / current * 100
+                self.save_step_result()
+                self.save_model()
+                
+        self.progress.remove_task(task_id)
+        train_loss /= current
+        correct /= current
+        return train_loss, correct * 100
+
     def init_local_info(self):
         self.local_info = {
             'train_loss': 0, 'current': 0, 'correct': 0,
@@ -148,6 +208,11 @@ class Trainer:
         self.local_info['current'] += len_x
     
     def make_log(self, avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc):
+        if self.train_epoch == self.train_epoch_basic:
+            return 'loss: {:>6f} | acc: {:>0.1f}%'.format(
+                avg_loss, avg_acc
+            )
+        
         return 'loss: {:>6f} | acc: {:>0.1f}% (초성 {:>0.1f}%) (중성 {:>0.1f}%) (종성 {:>0.1f}%)'.format(
             avg_loss, avg_acc, avg_i_acc, avg_m_acc, avg_f_acc
         )

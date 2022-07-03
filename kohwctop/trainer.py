@@ -11,9 +11,13 @@ class Trainer:
     MODEL_NAME = 'model.pt'
     TRAINER_STATE_NAME = 'trainer_states.pt'
     TRAIN_STEP_RESULT_PATH = "train_step_result.csv"
+    TRAIN_EPOCH_RESULT_PATH = "train_result.csv"
     train_step_result = {
         'n_learn': [], 'loss': [], 'acc': [], 
         'initial_acc': [], 'medial_acc': [], 'final_acc': [], 
+    }
+    train_epoch_result = {
+        'loss': [], 'acc': []
     }
 
     def __init__(self, model, train_loader, test_loader, loss_fn, optimizer, device, print_every, save_dir, load_model_date_path=''):
@@ -52,9 +56,13 @@ class Trainer:
         for epoch in range(self.epoch+1, epochs+1):
             train_loss, train_acc = self.train_epoch(self.model)
             # test_loss, test_acc = test(self.model, self.test_loader, self.loss_fn, self.progress)
-            
-            self.progress.update(task_id, description=f'epoch {epoch+1}/{epochs}', advance=1)
+
+            self.progress.update(task_id, description=f'epoch {epoch}/{epochs}', advance=1)
             self.save_model()
+
+            Trainer.save_epoch_result['loss'].append(train_loss)
+            Trainer.save_epoch_result['acc'].append(train_acc)
+            self.save_epoch_result()
         
         self.progress.stop()
 
@@ -242,4 +250,10 @@ class Trainer:
         os.makedirs(self.save_dir, exist_ok=True)
         file_name = Trainer.TRAIN_STEP_RESULT_PATH
         train_step_df = pd.DataFrame(Trainer.train_step_result)
+        train_step_df.to_csv(self.save_dir+file_name, encoding="UTF-8", index=False)
+
+    def save_epoch_result(self) -> None:
+        os.makedirs(self.save_dir, exist_ok=True)
+        file_name = Trainer.TRAIN_EPOCH_RESULT_PATH
+        train_step_df = pd.DataFrame(Trainer.train_epoch_result)
         train_step_df.to_csv(self.save_dir+file_name, encoding="UTF-8", index=False)

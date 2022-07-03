@@ -1,0 +1,3 @@
+batch_size: 50
+print_every: 20
+load_model: 'outputs/2022-07-03/21-37-12/model.pt'

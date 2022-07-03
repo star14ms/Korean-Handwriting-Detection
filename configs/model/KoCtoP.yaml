@@ -1,4 +1,4 @@
-model: 'ConvNet'
+model: 'KoCtoP'
 input_size: 64
 layer_in_channels: [1, 32, 64, 128]
 layer_out_channels: [32, 64, 128, 256]

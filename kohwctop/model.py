@@ -2,7 +2,7 @@ import torch
 from torch import nn
 
 from kohwctop.save_feature_module import SaveFeatureModule
-from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
+from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS, wide_labels
 
 
 def Conv2d_Norm(in_channels, out_channels, kernel_size=3, stride=1, padding=1, activation='relu'):
@@ -179,7 +179,9 @@ class KoCtoP(SaveFeatureModule):
         hiddens=256,
         conv_activation='relu',
         ff_activation='relu',
-        dropout=0.5
+        dropout=0.5,
+        *args,
+        **kwargs,
     ) -> None:
         super().__init__()
         assert len(layer_in_channels) == len(layer_out_channels)
@@ -238,13 +240,15 @@ class ConvNet(SaveFeatureModule):
     def __init__(
         self,
         input_size=64, 
-        output_dim=1+52+51+10+31,
+        output_dim=len(wide_labels),
         layer_in_channels=(1, 32, 64, 128),
         layer_out_channels=(32, 64, 128, 256),
         hiddens=256,
         conv_activation='relu',
         ff_activation='relu',
-        dropout=0.5
+        dropout=0.5,
+        *args,
+        **kwargs,
     ) -> None:
         super().__init__()
         assert len(layer_in_channels) == len(layer_out_channels)

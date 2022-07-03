@@ -12,8 +12,8 @@ from rich.traceback import install
 install()
 
 from data import KoSyllableDataset
-from kohwctop import TrainConfig, ModelConfig
 from kohwctop.model import KoCtoP
+from kohwctop import TrainConfig, ConvNetConfig
 from kohwctop.trainer import Trainer
 from utils.rich import console
 
@@ -49,7 +49,7 @@ def train(config: DictConfig, save_dir: str):
 
 cs = ConfigStore.instance()
 cs.store(group="train", name="train", node=TrainConfig, package="train")
-cs.store(group="model", name="model", node=ModelConfig, package="model")
+cs.store(group="model", name="convNet", node=ConvNetConfig, package="model")
 
 
 @hydra.main(config_path=os.path.join('.', "configs"), config_name="train", version_base=None)

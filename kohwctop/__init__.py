@@ -19,7 +19,7 @@ class TestConfig:
 
 
 @dataclass
-class ModelConfig:
+class ConvNetConfig:
     input_size: int = 64                                # 모델에 넣는 이미지 크기
     layer_in_channels: List[int] = (1, 64, 128, 256)    # 합성곱 계층으로 들어가는 채널 수들
     layer_out_channels: List[int] = (64, 128, 256, 512) # 합성곱 계층에서 나오는 채널 수들

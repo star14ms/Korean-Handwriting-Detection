@@ -14,7 +14,7 @@ install()
 
 from data import KoSyllableDataset
 from data import KoHWSentenceDataset
-from kohwctop import TestConfig, ModelConfig
+from kohwctop import TestConfig, ConvNetConfig
 from kohwctop.model import KoCtoP
 from kohwctop.test import test, test_sample
 from utils.rich import new_progress, console
@@ -23,7 +23,7 @@ from utils.plot import set_font
 
 cs = ConfigStore.instance()
 cs.store(group="test", name="test", node=TestConfig, package="test")
-cs.store(group="model", name="model", node=ModelConfig, package="model")
+cs.store(group="model", name="convNet", node=ConvNetConfig, package="model")
 
 
 @hydra.main(config_path=os.path.join('.', "configs"), config_name="test", version_base=None)

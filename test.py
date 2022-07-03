@@ -14,7 +14,7 @@ install()
 
 from data import KoSyllableDataset
 from data import KoHWSentenceDataset
-from kohwctop import TestConfig, ConvNetConfig
+from kohwctop import TestConfig, KoCtoPConfig, ConvNetConfig
 from kohwctop.model import KoCtoP
 from kohwctop.test import test, test_sample
 from utils.rich import new_progress, console
@@ -23,6 +23,7 @@ from utils.plot import set_font
 
 cs = ConfigStore.instance()
 cs.store(group="test", name="test", node=TestConfig, package="test")
+cs.store(group="model", name="koCtoP", node=KoCtoPConfig, package="model")
 cs.store(group="model", name="convNet", node=ConvNetConfig, package="model")
 
 

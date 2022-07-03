@@ -9,7 +9,7 @@ if '__file__' in globals():
     sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 
 from torch import tensor, load, float32
-from kohwctop.model import KoCtoP
+from kohwctop.model import KoCtoP, ConvNet
 from kohwctop.transform import Resize
 from kohwctop.test import predict
 from utils.rich import console
@@ -49,12 +49,14 @@ def to_client(conn, addr):
 
 
 def detect(img):
-    model = KoCtoP()
+    model = ConvNet()
+    model_CtoP = KoCtoP()
     model.load_state_dict(load('model.pt'))
+    model_CtoP.load_state_dict(load('model_CtoP.pt'))
 
     resize = Resize()
     img = resize(img)
-    answer = predict(img, None, model)
+    answer = predict(img, None, model, model_CtoP)
 
     return answer
 

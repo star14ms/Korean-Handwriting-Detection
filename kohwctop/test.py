@@ -4,7 +4,7 @@ import sys
 
 from utils.rich import console
 from utils.plot import show_img_and_scores
-from tools.constant import label_to_syllable
+from tools.constant import label_to_syllable, to_char
 
 
 @torch.no_grad()
@@ -79,12 +79,14 @@ def test(model, test_loader, loss_fn, progress, print_every, show_wrong_info=Fal
     return test_loss, correct * 100
 
 @torch.no_grad()
-def predict(x, t, model, plot=False, plot_when_wrong=True, description=None, verbose=False):
+def predict_KoCtoP(x, t, model, plot=False, plot_when_wrong=True, description=None, verbose=False):
     model.eval()
     device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
-    x = x.unsqueeze(0).to(device)
+
+    while len(x.shape) < 4:
+        x = x.unsqueeze(0)
     
-    yi, ym, yf = model(x)
+    yi, ym, yf = model(x.to(device))
     yi, ym, yf = yi.cpu(), ym.cpu(), yf.cpu()
     pi, pm, pf = yi.argmax(1), ym.argmax(1), yf.argmax(1)
 
@@ -102,6 +104,45 @@ def predict(x, t, model, plot=False, plot_when_wrong=True, description=None, ver
     
     if plot and (not plot_when_wrong or (t is not None and not correct)):
         show_img_and_scores(x.cpu(), yi, ym, yf, title=text)
+    
+    if verbose:
+        color = 'green' if correct else 'white' if correct is None else 'red'
+        text = f'[{color}]' + text + f'[/{color}]'
+        console.log(text)
+    
+    if t is not None:
+        return char_y, correct
+    else:
+        return char_y
+
+@torch.no_grad()
+def predict(x, t, model, model_KoCtoP, plot=False, plot_when_wrong=True, description=None, verbose=False):
+    model.eval()
+    device = 'cuda' if next(model.parameters()).is_cuda else 'cpu'
+    
+    while len(x.shape) < 4:
+        x = x.unsqueeze(0)
+    
+    y = model(x.to(device)).cpu()
+    p = y.argmax(1)
+
+    char_y = to_char[p.item()]
+
+    if char_y == '한글 음절':
+        return predict_KoCtoP(x, t, model_KoCtoP, plot, plot_when_wrong, description, verbose)
+    
+    if t is not None:
+        ti, tm, tf = t.values()
+        char_t = label_to_syllable(ti, tm, tf)
+        correct = p == t
+    
+        text = 'test data {} - 예측: {} 정답: {}'.format(description, char_y, char_t)
+    else:
+        text = 'test data {} - 예측: {}'.format(description, char_y)
+        correct = None
+    
+    if plot and (not plot_when_wrong or (t is not None and not correct)):
+        show_img_and_scores(x.cpu(), y, title=text)
     
     if verbose:
         color = 'green' if correct else 'white' if correct is None else 'red'

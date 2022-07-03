@@ -5,15 +5,15 @@ import argparse
 import time
 import numpy as np
 
-from kohwctop.model import KoCtoP
+from kohwctop.model import KoCtoP, ConvNet
 from kohwctop.transform import Resize
-from kohwctop.test import predict
+from kohwctop.test import predict, predict_KoCtoP
 from utils.plot import set_font
 from utils.rich import console
 
 
 def main(args):
-    model = load_model(args)
+    model, model_KoCtoP = load_model(args)
     mousepos = []
     detect_interval_sec = 2
     is_drawing = False
@@ -52,7 +52,7 @@ def main(args):
         
         if detect_interval_sec <= time.time() - start:
             start = time.time()
-            result = detect(model, screen, show_graph)
+            result = detect(model, model_KoCtoP, screen, show_graph)
             console.print(result)
             show_graph = False
 
@@ -66,27 +66,42 @@ def main(args):
 def load_model(args):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     console.log("Using [green]{}[/green] device\n".format(device))
-    model = KoCtoP().to(device)
-    model.load_state_dict(torch.load(args.load_model))
+
+    model_KoCtoP = KoCtoP().to(device)
+    model_KoCtoP.load_state_dict(torch.load(args.load_model_KoCtoP))
+
+    if args.load_model is None:
+        model = None
+    else:
+        model = ConvNet().to(device)
+        model.load_state_dict(torch.load(args.load_model))
+
     console.log('모델 로드 완료!')
 
-    return model
+    return model, model_KoCtoP
 
 
-def detect(model, screen, show_graph):
+def detect(model, model_KoCtoP, screen, show_graph):
     arr = pygame.surfarray.pixels2d(screen).T
     arr = np.where(arr!=0, 1.0, 0.0)
     arr = resize(arr.astype(np.float32))
-    pred = predict(arr, t=None, model=model, plot=show_graph, plot_when_wrong=False)
+
+    if model is None:
+        pred = predict_KoCtoP(arr, t=None, model=model, plot=show_graph, plot_when_wrong=False)
+    else:
+        pred = predict(arr, t=None, model=model, model_KoCtoP=model_KoCtoP, plot=show_graph, plot_when_wrong=False)
 
     return pred
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--load-model', type=str, dest='load_model',
-                            default='model.pt',
+    parser.add_argument('--load-model-KoCtoP', type=str, dest='load_model_KoCtoP',
+                            default='model_CtoP.pt',
                             help='불러올 모델 경로 (model weight path to load)')
+    parser.add_argument('--load-model', type=str, dest='load_model',
+                        default='model.pt',
+                        help='불러올 모델 경로 (model weight path to load)')
     args = parser.parse_args()
 
     resize = Resize()

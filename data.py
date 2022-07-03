@@ -135,8 +135,8 @@ class WideCharDataset(Dataset):
 
     def __init__(
         self, 
-        data_syllable_dir='.data/syllable/', data_alphabet_dir='./data/alphabet/', 
-        data_phoneme_dir='.data/phoneme/', data_number_dir='./data/number/', data_special_dir='./data/special/', 
+        data_syllable_dir='./data/syllable/', data_alphabet_dir='./data/alphabet/', 
+        data_phoneme_dir='./data/phoneme/', data_number_dir='./data/number/', data_special_dir='./data/special/', 
         transform=Compose([Resize()]), target_transform=None
     ):
         self.transform = transform

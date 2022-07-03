@@ -232,3 +232,53 @@ class KoCtoP(SaveFeatureModule):
             ys.append(ff_layers(y)) # [N, 4096]
 
         return (*ys,)
+
+
+class ConvNet(SaveFeatureModule):
+    def __init__(
+        self,
+        input_size=64, 
+        output_dim=1+52+51+10+31,
+        layer_in_channels=(1, 32, 64, 128),
+        layer_out_channels=(32, 64, 128, 256),
+        hiddens=256,
+        conv_activation='relu',
+        ff_activation='relu',
+        dropout=0.5
+    ) -> None:
+        super().__init__()
+        assert len(layer_in_channels) == len(layer_out_channels)
+        for next_in_chan, previous_out_chan in zip(layer_in_channels[1:], layer_out_channels[:-1]):
+            assert next_in_chan == previous_out_chan
+        
+        last_conv_feature_size = input_size // (2**len(layer_in_channels))
+        in_features = (layer_out_channels[-1]*(last_conv_feature_size**2))
+        
+        self.conv_layers_list = nn.ModuleList()
+        
+        for in_channels, out_channels in zip(layer_in_channels, layer_out_channels):
+            self.conv_layers_list.append(
+                nn.Sequential(
+                    Conv2d_Norm(in_channels, out_channels, activation=conv_activation), 
+                    Conv2d_Norm(out_channels, out_channels, activation=conv_activation), 
+                    nn.MaxPool2d(kernel_size=2, stride=2),
+                )
+            )
+   
+        self.ff_layers = nn.Sequential(
+            nn.Flatten(),
+            nn.Dropout(p=dropout),
+            Linear_Norm(in_features, hiddens, ff_activation),
+            nn.Dropout(p=dropout),
+            nn.Linear(hiddens, output_dim),
+            nn.Dropout(p=dropout),
+        )
+
+    def forward(self, x):
+        y = self.conv_layers_list[0](x) # [N, 32, 32, 32]
+        y = self.conv_layers_list[1](y) # [N, 64, 16, 16]
+        y = self.conv_layers_list[2](y) # [N, 128, 8, 8]
+        y = self.conv_layers_list[3](y) # [N, 256, 4, 4]
+        y = self.ff_layers(y) # [N, 4096]
+
+        return y

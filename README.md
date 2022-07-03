@@ -56,7 +56,7 @@ pip install -r requirements.txt
 ---
 
 ## 2. 데이터셋 생성
-> 음절 데이터: data-syllable/ 경로에 생성됨 - 반자동 생성
+> 음절 데이터: ./data/syllable/ 경로에 생성됨 - 반자동 생성
 
 > 문장 데이터: data/ 경로에 생성됨 - 자동 생성
 

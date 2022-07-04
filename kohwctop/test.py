@@ -3,7 +3,7 @@ import random
 import sys
 
 from utils.rich import console
-from utils.plot import show_img_and_scores
+from utils.plot import show_img_and_scores, wide_plot_kwargs, imf_plot_kwargs
 from tools.constant import label_to_syllable, to_char
 
 
@@ -103,7 +103,7 @@ def predict_KoCtoP(x, t, model, plot=False, plot_when_wrong=True, description=No
         correct = None
     
     if plot and (not plot_when_wrong or (t is not None and not correct)):
-        show_img_and_scores(x.cpu(), yi, ym, yf, title=text)
+        show_img_and_scores(x.cpu(), yi, ym, yf, ys_kwargs=imf_plot_kwargs, title=text)
     
     if verbose:
         color = 'green' if correct else 'white' if correct is None else 'red'
@@ -124,12 +124,10 @@ def predict(x, t, model, model_KoCtoP, plot=False, plot_when_wrong=True, descrip
         x = x.unsqueeze(0)
     
     y = model(x.to(device)).cpu()
-    p = y.argmax(1)
+    y = torch.softmax(y[0], dim=0) * 100
+    p = y.argmax(0)
 
     char_y = to_char[p.item()]
-
-    if char_y == '한글 음절':
-        return predict_KoCtoP(x, t, model_KoCtoP, plot, plot_when_wrong, description, verbose)
     
     if t is not None:
         ti, tm, tf = t.values()
@@ -142,7 +140,10 @@ def predict(x, t, model, model_KoCtoP, plot=False, plot_when_wrong=True, descrip
         correct = None
     
     if plot and (not plot_when_wrong or (t is not None and not correct)):
-        show_img_and_scores(x.cpu(), y, title=text)
+        show_img_and_scores(x.cpu(), y[:52], y[52:104], y[104:], ys_kwargs=wide_plot_kwargs, title=text)
+    
+    if char_y == '한글 음절':
+        return predict_KoCtoP(x, t, model_KoCtoP, plot, plot_when_wrong, description, verbose)
     
     if verbose:
         color = 'green' if correct else 'white' if correct is None else 'red'

@@ -37,9 +37,9 @@ to_CtoP_label = {
 
 wide_labels = list()
 wide_labels = wide_labels + list(['한글 음절'])
-with open(f'labels/52-alphabet.txt', 'r', encoding='utf-8') as f:
-    wide_labels = wide_labels + list([line.rstrip('\n') for line in f.readlines()])
 with open(f'labels/51-phoneme-hangul.txt', 'r', encoding='utf-8') as f:
+    wide_labels = wide_labels + list([line.rstrip('\n') for line in f.readlines()])
+with open(f'labels/52-alphabet.txt', 'r', encoding='utf-8') as f:
     wide_labels = wide_labels + list([line.rstrip('\n') for line in f.readlines()])
 with open(f'labels/10-number.txt', 'r', encoding='utf-8') as f:
     wide_labels = wide_labels + list([line.rstrip('\n') for line in f.readlines()])

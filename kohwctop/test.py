@@ -78,6 +78,40 @@ def test(model, test_loader, loss_fn, progress, print_every, show_wrong_info=Fal
 
     return test_loss, correct * 100
 
+
+def get_top5_hangul_char(yi, ym, yf):
+    top5 = {}
+    yi_top5 = yi.topk(5)
+    ym_top5 = ym.topk(5)
+    yf_top5 = yf.topk(5)
+    yi_top5_scores, yi_top5_idxs = yi_top5[0], yi_top5[1]
+    ym_top5_scores, ym_top5_idxs = ym_top5[0], ym_top5[1]
+    yf_top5_scores, yf_top5_idxs = yf_top5[0], yf_top5[1]
+    yi_idx, ym_idx, yf_idx = 0, 0, 0
+
+    for top_n in range(1, 5+1):
+        char_y = label_to_syllable(yi_top5_idxs[yi_idx].item(), ym_top5_idxs[ym_idx].item(), yf_top5_idxs[yf_idx].item()).strip()
+        mean_score = torch.mean(torch.stack([yi_top5_scores[yi_idx], ym_top5_scores[ym_idx], yf_top5_scores[yf_idx]]))
+        top5[char_y] = round(mean_score.item(), 1)
+        
+        if top_n == 5:
+            break
+
+        yi_delta_next = yi_top5_scores[yi_idx] - yi_top5_scores[yi_idx+1]
+        ym_delta_next = ym_top5_scores[ym_idx] - ym_top5_scores[ym_idx+1]
+        yf_delta_next = yf_top5_scores[yf_idx] - yf_top5_scores[yf_idx+1]
+
+        if yi_delta_next < ym_delta_next and yi_delta_next < yf_delta_next:
+            yi_idx += 1
+
+        elif ym_delta_next < yi_delta_next and ym_delta_next < yf_delta_next:
+            ym_idx += 1
+
+        elif yf_delta_next < yi_delta_next and yf_delta_next < ym_delta_next:
+            yf_idx += 1
+        
+    return top5
+
 @torch.no_grad()
 def predict_KoCtoP(x, t, model, plot=False, plot_when_wrong=True, description=None, verbose=False):
     model.eval()
@@ -90,16 +124,21 @@ def predict_KoCtoP(x, t, model, plot=False, plot_when_wrong=True, description=No
     yi, ym, yf = yi.cpu(), ym.cpu(), yf.cpu()
     pi, pm, pf = yi.argmax(1), ym.argmax(1), yf.argmax(1)
 
-    char_y = label_to_syllable(pi.item(), pm.item(), pf.item())
+    yi = torch.softmax(yi[0], dim=0) * 100
+    ym = torch.softmax(ym[0], dim=0) * 100
+    yf = torch.softmax(yf[0], dim=0) * 100
+
+    top5 = get_top5_hangul_char(yi, ym, yf)
+    top1_char = tuple(top5.keys())[0]
     
     if t is not None:
         ti, tm, tf = t.values()
         char_t = label_to_syllable(ti, tm, tf)
         correct = (pi==ti and pm==tm and pf==tf)
     
-        text = 'test data {} - 예측: {} 정답: {}'.format(description, char_y, char_t)
+        text = 'test data {} - 예측: {} 정답: {}'.format(description, top1_char, char_t)
     else:
-        text = 'test data {} - 예측: {}'.format(description, char_y)
+        text = 'test data {} - 예측: {}'.format(description, top1_char)
         correct = None
     
     if plot and (not plot_when_wrong or (t is not None and not correct)):
@@ -111,9 +150,9 @@ def predict_KoCtoP(x, t, model, plot=False, plot_when_wrong=True, description=No
         console.log(text)
     
     if t is not None:
-        return char_y, correct
+        return top5, correct
     else:
-        return char_y
+        return top5
 
 @torch.no_grad()
 def predict(x, t, model, model_KoCtoP, plot=False, plot_when_wrong=True, description=None, verbose=False):
@@ -127,23 +166,31 @@ def predict(x, t, model, model_KoCtoP, plot=False, plot_when_wrong=True, descrip
     y = torch.softmax(y[0], dim=0) * 100
     p = y.argmax(0)
 
-    char_y = to_char[p.item()]
+    top5 = {}
+    top5_score_idx = y.topk(5)
+    for idx, score in zip(top5_score_idx[1], top5_score_idx[0]):
+        top5[to_char[idx.item()]] = round(score.item(), 1)
     
+    top1_char = tuple(top5.keys())[0]
+    
+    if top5.get('한글 음절') is not None:
+        del top5['한글 음절']
+
     if t is not None:
         ti, tm, tf = t.values()
         char_t = label_to_syllable(ti, tm, tf)
         correct = p == t
     
-        text = 'test data {} - 예측: {} 정답: {}'.format(description, char_y, char_t)
+        text = 'test data {} - 예측: {} 정답: {}'.format(description, top1_char, char_t)
     else:
-        text = 'test data {} - 예측: {}'.format(description, char_y)
+        text = 'test data {} - 예측: {}'.format(description, top1_char)
         correct = None
     
     if plot and (not plot_when_wrong or (t is not None and not correct)):
         show_img_and_scores(x.cpu(), y[:52], y[52:104], y[104:], ys_kwargs=wide_plot_kwargs, title=text)
     
-    if char_y == '한글 음절':
-        return predict_KoCtoP(x, t, model_KoCtoP, plot, plot_when_wrong, description, verbose)
+    if top1_char == '한글 음절':
+        return {**predict_KoCtoP(x, t, model_KoCtoP, plot, plot_when_wrong, description, verbose), **top5}
     
     if verbose:
         color = 'green' if correct else 'white' if correct is None else 'red'
@@ -151,9 +198,9 @@ def predict(x, t, model, model_KoCtoP, plot=False, plot_when_wrong=True, descrip
         console.log(text)
     
     if t is not None:
-        return char_y, correct
+        return top5, correct
     else:
-        return char_y
+        return top5
 
 @torch.no_grad()
 def test_sample(test_set, model, device, random_sample=True, plot_when_wrong=True, plot_feature_map=False):

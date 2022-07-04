@@ -96,10 +96,10 @@ if __name__ == '__main__':
 
 
 from utils.utils import softmax
-from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS
+from tools import CHAR_INITIALS_PLUS, CHAR_MEDIALS_PLUS, CHAR_FINALS_PLUS, wide_labels
 
 
-ys_plot_kwargs = [
+imf_plot_kwargs = [
     {
         'xticklabels': CHAR_INITIALS_PLUS,
         'xlabel': '초성',
@@ -114,8 +114,23 @@ ys_plot_kwargs = [
     },
 ]
 
+wide_plot_kwargs = [
+    {
+        'xticklabels': wide_labels[:52],
+        'xlabel': '한글 자모음',
+    },
+    {
+        'xticklabels': wide_labels[52:104],
+        'xlabel': '알파벳',
+    },
+    {
+        'xticklabels': wide_labels[104:],
+        'xlabel': '숫자, 특수문자',
+    },
+]
 
-def show_img_and_scores(x, *ys, ys_kwargs=ys_plot_kwargs, title='', dark_mode=True):
+
+def show_img_and_scores(x, *ys, ys_kwargs=imf_plot_kwargs, title='', dark_mode=True):
     while x.shape[0] == 1:
         x = x[0]
     
@@ -145,6 +160,8 @@ def show_img_and_scores(x, *ys, ys_kwargs=ys_plot_kwargs, title='', dark_mode=Tr
         x_ = np.arange(len(y))
         ax = fig.add_subplot(len_ys, 2, (ys_idx+1)*2, xticks=x_, ylabel='점수', **y_kwargs)
         plt.yticks(np.round(sorted(y)[-3:], 1), fontname='sans-serif')
+        if ys_kwargs == imf_plot_kwargs:
+            y = softmax(np.array(y)) * 100
         ax.bar(x_, y, color=color)
 
     plt.get_current_fig_manager().window.showMaximized()

@@ -31,13 +31,13 @@ def to_client(conn, addr):
         img_path = recv_json_data['img_path']
 
         img = Image.open(img_path).convert('L')
-        answer = detect(img)
+        top5 = detect(img)
 
         response = {
-            "answer": answer,
+            "answer": tuple(top5.keys()),
         }
         
-        console.log('예측:', answer)
+        console.log('예측:', top5)
         message = json.dumps(response)
         conn.send(message.encode())
 
@@ -56,9 +56,9 @@ def detect(img):
 
     resize = Resize()
     img = resize(img)
-    answer = predict(img, None, model, model_CtoP)
+    top5 = predict(img, None, model, model_CtoP)
 
-    return answer
+    return top5
 
 
 class BotServer:

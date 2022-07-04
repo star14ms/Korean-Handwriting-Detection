@@ -57,7 +57,7 @@ def main(args):
             show_graph = False
 
         if result is not None:
-            text = myfont.render(result, True, (255, 255, 255))
+            text = myfont.render(list(result.keys())[0], True, (255, 255, 255))
             screen.blit(text, (512-120, 0))
 
         pygame.display.update()

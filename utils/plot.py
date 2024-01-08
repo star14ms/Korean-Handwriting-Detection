@@ -164,7 +164,7 @@ def show_img_and_scores(x, *ys, ys_kwargs=imf_plot_kwargs, title='', dark_mode=T
             y = softmax(np.array(y)) * 100
         ax.bar(x_, y, color=color)
 
-    plt.get_current_fig_manager().window.showMaximized()
+    plt.get_current_fig_manager().full_screen_toggle()
     plt.pause(0.01)
     plt.subplots_adjust(left=0.0014, right=0.986, bottom=0.080, top=0.936, wspace=0.084, hspace=0.344)
     plt.pause(0.01)

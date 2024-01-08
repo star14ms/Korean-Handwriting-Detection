@@ -4,6 +4,7 @@ import torch
 import argparse
 import time
 import numpy as np
+import platform
 
 from kohwctop.model import KoCtoP, ConvNet
 from kohwctop.transform import Resize
@@ -68,13 +69,13 @@ def load_model(args):
     console.log("Using [green]{}[/green] device\n".format(device))
 
     model_KoCtoP = KoCtoP().to(device)
-    model_KoCtoP.load_state_dict(torch.load(args.load_model_KoCtoP))
+    model_KoCtoP.load_state_dict(torch.load(args.load_model_KoCtoP, map_location=torch.device(device)))
 
     if args.load_model is None:
         model = None
     else:
         model = ConvNet().to(device)
-        model.load_state_dict(torch.load(args.load_model))
+        model.load_state_dict(torch.load(args.load_model, map_location=torch.device(device)))
 
     console.log('모델 로드 완료!')
 
@@ -82,8 +83,15 @@ def load_model(args):
 
 
 def detect(model, model_KoCtoP, screen, show_graph):
-    arr = pygame.surfarray.pixels2d(screen).T
-    arr = np.where(arr!=0, 1.0, 0.0)
+    if platform.system() == 'Windows':
+        arr = pygame.surfarray.pixels2d(screen).T
+        arr = np.where(arr!=0, 1.0, 0.0)
+    elif platform.system() == 'Darwin':
+        arr = pygame.surfarray.array2d(screen).T
+        arr = np.where(arr==-1, 1.0, 0.0)
+    else:
+        raise NotImplementedError
+
     arr = resize(arr.astype(np.float32))
 
     if model is None:
